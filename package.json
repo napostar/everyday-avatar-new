@@ -42,5 +42,8 @@
   "bugs": {
     "url": "https://github.com/Hussainzz/everyday-avatar/issues"
   },
-  "homepage": "https://github.com/Hussainzz/everyday-avatar#readme"
+  "homepage": "https://github.com/Hussainzz/everyday-avatar#readme",
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.5.0"
+  }
 }
