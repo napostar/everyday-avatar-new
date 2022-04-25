@@ -4,6 +4,7 @@ require("@nomiclabs/hardhat-waffle");
 require("hardhat-gas-reporter");
 require("solidity-coverage");
 require("hardhat-deploy");
+require('hardhat-contract-sizer');
 
 module.exports = {
   networks: {
@@ -46,6 +47,12 @@ module.exports = {
     compilers: [
       {
         version: "0.8.11",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
       },
       {
         version: "0.8.7",

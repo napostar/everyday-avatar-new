@@ -81,25 +81,19 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable {
         attach(tokenId, attrId[i], attrValue[i]);
       }
     }   
-    //TODO need a way to convert attribute value to a string.
-    //helper function to build json metadata
-    function getAttributes(uint256 tokenId) public view returns (string memory) {
-      uint256[] memory attributes = attributesOf(tokenId);
-      uint256[] memory values = this.balanceOfBatch(tokenId, attributes);
-      bytes memory output;
-      
-      for(uint i=0 ; i < attributes.length ; i++) {
-      
-        output = abi.encodePacked(output, '{"trait_type":"', symbol(attributes[i]), '","value":"', values[i].toString(), '"}');
-      }
-      
-      return string(output);
-    }
     
     //build the json uri for the specified tokenId
     function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory)
     {
-        string memory attributes = getAttributes(tokenId);
+        uint256[] memory attr = attributesOf(tokenId);
+        uint256[] memory values = this.balanceOfBatch(tokenId, attr);
+        bytes memory output;
+      
+        for(uint i=0 ; i < attr.length ; i++) {
+        
+          output = abi.encodePacked(output, '{"trait_type":"', symbol(attr[i]), '","value":"', values[i].toString(), '"}');
+        }
+      
         string memory json = Base64.encode(bytes(string(abi.encodePacked(
           '{"name": "Everyday Avatar',  //would be cool if name could come from the metacore identity contract
           ' #', 
@@ -107,7 +101,7 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable {
           '", "description":"Everyday Avatars are a collection of profile picture NFTs that are completely customizable. You can freely modify and update your Avatar using the dApp. Attributes are stored on-chain and this amazing flexibility is powered by EIP-3664.", "image":"', 
             super.tokenURI(tokenId),
           '","attributes":['
-          , attributes, 
+          , output, 
           ']}'
         ))));
 
