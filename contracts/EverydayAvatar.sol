@@ -17,6 +17,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Base64.sol";
 import "./ERC3664/extensions/ERC3664Updatable.sol";
+//import "https://github.com/napostar/EIP-3664/blob/main/contracts/extensions/ERC3664Updatable.sol";
 
 /**
  * The Everyday Avatar project was designed with the following requirements/features:
@@ -28,6 +29,7 @@ import "./ERC3664/extensions/ERC3664Updatable.sol";
  */
 contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable {
     using Counters for Counters.Counter;
+    using Strings for uint256;
 
     Counters.Counter private _tokenIdCounter;
     
@@ -41,7 +43,7 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable {
     uint constant CLOTHES = 4;
 
     constructor() ERC721("Everyday Avatar", "EA") ERC3664("") {
-      //Create ERC3664 attribute categories (attributeID, symbol text, json text, uri)
+      //Create ERC3664 attribute categories (attributeID, name, symbol, uri)
       ERC3664._mint(BACKGROUND, "bg", "Background", "");
       ERC3664._mint(HEAD, "head", "Head", "");
       ERC3664._mint(FACE, "face", "Face", "");
@@ -57,7 +59,9 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable {
         uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
         _safeMint(to, tokenId);
-        
+        //TODO query new image URI from oracle, for now just set it.
+        _setTokenURI(tokenId, string(abi.encodePacked("ipfs://HASH/",tokenId.toString())));
+
         for(uint i=0; i < attrId.length ; i++){
           ERC3664.attach(tokenId, attrId[i], attrValue[i]);
         }
@@ -86,7 +90,7 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable {
       
       for(uint i=0 ; i < attributes.length ; i++) {
       
-        output = abi.encodePacked(output, '{"trait_type":"', name(attributes[i]), '","value":"', uintToBytes(values[i]), '"}');
+        output = abi.encodePacked(output, '{"trait_type":"', symbol(attributes[i]), '","value":"', values[i].toString(), '"}');
       }
       
       return string(output);
@@ -99,9 +103,9 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable {
         string memory json = Base64.encode(bytes(string(abi.encodePacked(
           '{"name": "Everyday Avatar',  //would be cool if name could come from the metacore identity contract
           ' #', 
-          uintToBytes(tokenId), 
+          tokenId.toString(), 
           '", "description":"Everyday Avatars are a collection of profile picture NFTs that are completely customizable. You can freely modify and update your Avatar using the dApp. Attributes are stored on-chain and this amazing flexibility is powered by EIP-3664.", "image":"', 
-          //TODO ADD IMAGE IPFS
+            super.tokenURI(tokenId),
           '","attributes":['
           , attributes, 
           ']}'
@@ -119,22 +123,6 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable {
     function ownerWithdraw(address payable to) public onlyOwner {
       to.transfer(address(this).balance);
     }
-    
-    //convert number to string (technically bytes...)
-    function uintToBytes(uint v) internal pure returns (bytes32 ret) {
-        if (v == 0) {
-            ret = '0';
-        }
-        else {
-            while (v > 0) {
-                ret = bytes32(uint(ret) / (2 ** 8));
-                ret |= bytes32(((v % 10) + 48) * 2 ** (8 * 31));
-                v /= 10;
-            }
-        }
-        return ret;
-    }
-    
     
     // The following functions are overrides required by Solidity.
 
