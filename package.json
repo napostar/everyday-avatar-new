@@ -44,6 +44,7 @@
   },
   "homepage": "https://github.com/Hussainzz/everyday-avatar#readme",
   "dependencies": {
+    "@chainlink/contracts": "^0.4.0",
     "@openzeppelin/contracts": "^4.5.0",
     "hardhat-contract-sizer": "^2.5.1"
   }

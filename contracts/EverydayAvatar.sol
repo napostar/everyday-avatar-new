@@ -18,6 +18,20 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Base64.sol";
 import "./ERC3664/extensions/ERC3664Updatable.sol";
 //import "https://github.com/napostar/EIP-3664/blob/main/contracts/extensions/ERC3664Updatable.sol";
+import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+
+library AvatarData {
+
+    //List of attribute/nft part categories (Using Invisible Friends demo content)   
+    uint constant BACKGROUND = 1;
+    uint constant HEAD = 2;
+    uint constant FACE = 3;
+    uint constant CLOTHES = 4;
+}
+
+interface IAvatarData  {
+    function componentNames(uint[] memory attrValues) external view returns(string[] memory);
+}
 
 /**
  * The Everyday Avatar project was designed with the following requirements/features:
@@ -33,24 +47,28 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable {
 
     Counters.Counter private _tokenIdCounter;
     
+    IAvatarData compData;
+    AggregatorV3Interface internal priceFeed;
+    
     //mint fee can be updated by contract owner
     uint256 public mintFee;
-    
-    //List of attribute/nft part categories (Using Invisible Friends demo content)   
-    uint constant BACKGROUND = 1;
-    uint constant HEAD = 2;
-    uint constant FACE = 3;
-    uint constant CLOTHES = 4;
 
     constructor() ERC721("Everyday Avatar", "EA") ERC3664("") {
       //Create ERC3664 attribute categories (attributeID, name, symbol, uri)
-      ERC3664._mint(BACKGROUND, "bg", "Background", "");
-      ERC3664._mint(HEAD, "head", "Head", "");
-      ERC3664._mint(FACE, "face", "Face", "");
-      ERC3664._mint(CLOTHES, "clothes", "Clothes", "");
+      ERC3664._mint(AvatarData.BACKGROUND, "bg", "Background", "");
+      ERC3664._mint(AvatarData.HEAD, "head", "Head", "");
+      ERC3664._mint(AvatarData.FACE, "face", "Face", "");
+      ERC3664._mint(AvatarData.CLOTHES, "clothes", "Clothes", "");
       
       //initial mint fee will be 10 MATIC (~$15 usd) (deploying on Polygon)
       mintFee = 10 ether;
+
+      //need to update with the actual contract (needs to be deployed first)
+      compData =  IAvatarData(0x0fC5025C764cE34df352757e82f7B5c4Df39A836);
+      
+      //mainnet matic/usd: 0xAB594600376Ec9fD91F8e885dADF0CE036862dE0
+      //mumbai matic/usd: 0xd0D5e3DB44DE05E9F294BB0a3bEEaF030DE24Ada
+      priceFeed = AggregatorV3Interface(0xd0D5e3DB44DE05E9F294BB0a3bEEaF030DE24Ada);
     }
 	
     //mint an avatar with the provided attributes, which will come from the dApp UI (ie user selection)
@@ -88,10 +106,14 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable {
         uint256[] memory attr = attributesOf(tokenId);
         uint256[] memory values = this.balanceOfBatch(tokenId, attr);
         bytes memory output;
-      
+
+        string[] memory tokenNames = compData.componentNames(values);
+
         for(uint i=0 ; i < attr.length ; i++) {
-        
-          output = abi.encodePacked(output, '{"trait_type":"', symbol(attr[i]), '","value":"', values[i].toString(), '"}');
+          output = abi.encodePacked(output, '{"trait_type":"', symbol(attr[i]), '","value":"', 
+          //values[i].toString(), 
+          tokenNames[i],
+          '"}');
         }
       
         string memory json = Base64.encode(bytes(string(abi.encodePacked(
@@ -108,9 +130,17 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable {
         return string(abi.encodePacked('data:application/json;base64,', json));
     }
     
-    //update the minting fee, need to keep the price in the $10-20 usd range (TODO use a price feeds oracle for this with a keeper to update automatically?)
-    function updateMintFee(uint256 newFee) public onlyOwner {
-      mintFee = newFee;
+    //update the minting fee, need to keep the price at $10 usd range (using a price feeds oracle for this with a keeper to update automatically)
+    function updateFee() public {
+        (
+            /*uint80 roundID*/,
+            int price,
+            /*uint startedAt*/,
+            /*uint timeStamp*/,
+            /*uint80 answeredInRound*/
+        ) = priceFeed.latestRoundData();
+        //calculates the new mint fee (of the amount of wei that equals $10 usd)
+        mintFee = (10*10**18)/(uint(price)*10**(18-priceFeed.decimals())); 
     }
     
     //withdraw function for funds (TODO look into PaymentSplitter contract)
