@@ -19,6 +19,7 @@ import "@openzeppelin/contracts/utils/Base64.sol";
 import "./ERC3664/extensions/ERC3664Updatable.sol";
 //import "https://github.com/napostar/EIP-3664/blob/main/contracts/extensions/ERC3664Updatable.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
 
 library AvatarData {
 
@@ -41,8 +42,9 @@ interface IAvatarData  {
  *   -Utilizes Chainlink Any-API to update the token's IPFS image when it's visual attributes are changed
  *   - 
  */
-contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable {
+contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, ChainlinkClient {
     using Counters for Counters.Counter;
+    using Chainlink for Chainlink.Request;
     using Strings for uint256;
 
     Counters.Counter private _tokenIdCounter;
@@ -52,6 +54,8 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable {
     
     //mint fee can be updated by contract owner
     uint256 public mintFee;
+    
+    mapping(bytes32 => uint256) private _requestMap;
 
     constructor() ERC721("Everyday Avatar", "EA") ERC3664("") {
       //Create ERC3664 attribute categories (attributeID, name, symbol, uri)
@@ -69,6 +73,9 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable {
       //mainnet matic/usd: 0xAB594600376Ec9fD91F8e885dADF0CE036862dE0
       //mumbai matic/usd: 0xd0D5e3DB44DE05E9F294BB0a3bEEaF030DE24Ada
       priceFeed = AggregatorV3Interface(0xd0D5e3DB44DE05E9F294BB0a3bEEaF030DE24Ada);
+      
+      setChainlinkToken(0x326C977E6efc84E512bB9C30f76E30c160eD06FB);
+      setChainlinkOracle(0xedaa6962Cf1368a92e244DdC11aaC49c0A0acC37);
     }
 	
     //mint an avatar with the provided attributes, which will come from the dApp UI (ie user selection)
@@ -77,18 +84,15 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable {
         uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
         _safeMint(to, tokenId);
-        //TODO query new image URI from oracle, for now just set it.
-        _setTokenURI(tokenId, string(abi.encodePacked("ipfs://HASH/",tokenId.toString())));
-
+              
         for(uint i=0; i < attrId.length ; i++){
           ERC3664.attach(tokenId, attrId[i], attrValue[i]);
         }
+        
+        //query new image URI from oracle
+        requestNewImage(tokenId);
     }
-	
-    //TODO implement function to update token image URI from oracle (use '_setTokenURI(tokenId, uri)' )
-    //TODO implement chainlink Any-API when attributes change
-    //TODO implement function to lookup string name of attribute based on id
-    
+
     //update token attributes (scoped to only the token owner)
     function updateAvatar(uint256 tokenId, uint256[] memory attrId, uint256[] memory attrValue) public {
       //TODO validate user is owner using _msgSender(); (support meta transactions)
@@ -99,6 +103,60 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable {
         attach(tokenId, attrId[i], attrValue[i]);
       }
     }   
+    
+    //implement chainlink Any-API when attributes change
+    //when the avatar changes, generate a new image and save the IPFS hash
+    function requestNewImage(uint256 tokenId) internal {
+      bytes32 specId = "881231241d2c4d9797fd8b9f5baab786";
+      uint256 payment = 0;
+      Chainlink.Request memory req = buildChainlinkRequest(specId, address(this), this.fulfillBytes.selector);
+      //req.add("get","https://everydayavatar.free.beeceptor.com/img/101");
+      req.add("get", string(abi.encodePacked(_baseURI(), getTokenAttributeString(tokenId))));
+      req.add("path", "data,result");
+      
+      bytes32 requestId = sendOperatorRequest(req, payment);
+      _requestMap[requestId] = tokenId;
+    }
+    
+    event RequestFulfilled(bytes32 indexed requestId, bytes indexed data, uint256 indexed tokenId);
+  
+    /**
+     * @notice Fulfillment function for variable bytes
+     * @dev This is called by the oracle. recordChainlinkFulfillment must be used.
+     */
+    function fulfillBytes(bytes32 requestId, bytes memory bytesData) public recordChainlinkFulfillment(requestId) {
+      uint256 tokenId = _requestMap[requestId];
+      emit RequestFulfilled(requestId, bytesData, tokenId);
+      _setTokenURI(tokenId, string(abi.encodePacked("ipfs://",bytesData)));
+    }
+    
+    //generate the attribute string that will behave like the DNA for a given token.
+    function getTokenAttributeString(uint256 tokenId) internal view returns(bytes memory){
+      bytes memory output;
+      //go through all the attribute categories
+      for(uint i=0 ; i < 4 ; i++) {
+        output = abi.encodePacked(output,toFLString(balanceOf(tokenId, i+1), 4));
+      }
+      return output;
+    }
+    
+    /**
+     * @dev Converts a `uint256` to its ASCII `string` representation with a fixed length. Number will be truncated if larger than will fit in length digits.
+     */
+    function toFLString(uint256 value, uint256 length) internal pure returns (bytes memory) {
+      //this implementation is inspired by the Strings Library
+      bytes memory buffer = new bytes(length);
+      for(uint256 i = length ; i > 0 ; --i) {
+          buffer[i-1] = bytes1(uint8(48 + uint256(value % 10)));
+          value /= 10;
+      }
+      return buffer;
+    }
+    
+    //using baseURI to store the base path for the image request API
+    function _baseURI() internal view virtual override(ERC721) returns (string memory) {
+        return "https://everydayavatar.free.beeceptor.com/img/";
+    }
     
     //build the json uri for the specified tokenId
     function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory)
@@ -129,6 +187,7 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable {
 
         return string(abi.encodePacked('data:application/json;base64,', json));
     }
+    
     
     //update the minting fee, need to keep the price at $10 usd range (using a price feeds oracle for this with a keeper to update automatically)
     function updateFee() public {

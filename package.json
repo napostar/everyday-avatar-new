@@ -1,7 +1,7 @@
 {
   "name": "everyday-avatar",
   "version": "1.0.0",
-  "description": "This project demonstrates an advanced Hardhat use case, integrating other tools commonly used alongside Hardhat in the ecosystem.",
+  "description": "This is a dynamic NFT that can be updated by owners using the dApp",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
