@@ -1,24 +1,22 @@
-import logo from './logo.svg';
-import './App.css';
+import { BrowserRouter, Routes, Route } from "react-router-dom"
+
+import Landing from "./pages/Landing"
+import { MoralisProvider } from "react-moralis";
+import { NotificationProvider } from 'web3uikit';
+import MintModify from "./pages/MintModify";
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <MoralisProvider appId={process.env.REACT_APP_MORALIS_APPLICATION_ID} serverUrl={process.env.REACT_APP_MORALIS_SERVER_URL}>
+      <NotificationProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Landing />}/>
+            <Route path="/mint-avatar" element={<MintModify/>}/>
+          </Routes>
+        </BrowserRouter>
+      </NotificationProvider>
+    </MoralisProvider>
   );
 }
 
