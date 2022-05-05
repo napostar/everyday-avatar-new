@@ -98,16 +98,32 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
       //TODO validate user is owner using _msgSender(); (support meta transactions)
       //TODO add needed require checks
       for(uint i=0 ; i < attrId.length ; i++) {
-        //detatch and re-attach new ERC3664 attribute.  Would be nice if ERC3664 had a setValue instead of just increase/decrease
-        remove(tokenId, attrId[i]);
-        attach(tokenId, attrId[i], attrValue[i]);
+        //Would be nice if ERC3664 had a setValue instead of just increase/decrease
+        updateAttribute(tokenId, attrId[i], attrValue[i]);
       }
 
       //query new image URI from oracle
       //requestNewImage(tokenId);
-
       //TODO clear existing value in uriStorage if present
     }   
+
+    //update the value of an attribute to the given value, because a direct setter in ERC3664 doesn't exist :(
+    function updateAttribute(uint256 tokenId, uint256 attrId, uint256 newVal) internal {
+        uint256 amount = attrBalances[attrId][tokenId];
+        int256 offsetAmount = int256(amount) - int256(newVal);
+        require(offsetAmount != 0, "Attribute value has not changed.");
+        if(offsetAmount > 0) {
+          decrease(tokenId, attrId, abs(offsetAmount));
+        }
+        else {
+          increase(tokenId, attrId, abs(offsetAmount));
+        }
+    }
+
+    //absolute value function, because it's not built-in to solidity :(
+    function abs(int256 x) private pure returns (uint256) {
+      return x >= 0 ? uint256(x) : uint256(-x);
+    }
     
     //implement chainlink Any-API when attributes change
     //when the avatar changes, generate a new image and save the IPFS hash
