@@ -57,7 +57,7 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
     
     mapping(bytes32 => uint256) private _requestMap;
 
-    constructor() ERC721("Everyday Avatar", "EA") ERC3664("") {
+    constructor(address dataContract) ERC721("Everyday Avatar", "EA") ERC3664("") {
       //Create ERC3664 attribute categories (attributeID, name, symbol, uri)
       ERC3664._mint(AvatarData.BACKGROUND, "bg", "Background", "");
       ERC3664._mint(AvatarData.HEAD, "head", "Head", "");
@@ -68,7 +68,7 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
       mintFee = 10 ether;
 
       //need to update with the actual contract (needs to be deployed first)
-      compData =  IAvatarData(0x0fC5025C764cE34df352757e82f7B5c4Df39A836);
+      compData =  IAvatarData(dataContract);
       
       //mainnet matic/usd: 0xAB594600376Ec9fD91F8e885dADF0CE036862dE0
       //mumbai matic/usd: 0xd0D5e3DB44DE05E9F294BB0a3bEEaF030DE24Ada
@@ -80,7 +80,7 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
 	
     //mint an avatar with the provided attributes, which will come from the dApp UI (ie user selection)
     function mintAvatar(address to, uint256[] memory attrId, uint256[] memory attrValue) public payable {
-		//TODO add needed require checks
+		    //TODO add needed require checks
         uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
         _safeMint(to, tokenId);
@@ -90,7 +90,7 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
         }
         
         //query new image URI from oracle
-        requestNewImage(tokenId);
+        //requestNewImage(tokenId);
     }
 
     //update token attributes (scoped to only the token owner)
@@ -102,20 +102,24 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
         remove(tokenId, attrId[i]);
         attach(tokenId, attrId[i], attrValue[i]);
       }
+
+      //query new image URI from oracle
+      //requestNewImage(tokenId);
+
+      //TODO clear existing value in uriStorage if present
     }   
     
     //implement chainlink Any-API when attributes change
     //when the avatar changes, generate a new image and save the IPFS hash
-    function requestNewImage(uint256 tokenId) internal {
-      bytes32 specId = "881231241d2c4d9797fd8b9f5baab786";
+    function requestNewImage(uint256 tokenId) public returns(bytes32){
+      bytes32 _jobId = "04e9f8f6e4e8419e89d8d942566ef963";
       uint256 payment = 0;
-      Chainlink.Request memory req = buildChainlinkRequest(specId, address(this), this.fulfillBytes.selector);
-      //req.add("get","https://everydayavatar.free.beeceptor.com/img/101");
-      req.add("get", string(abi.encodePacked(_baseURI(), getTokenAttributeString(tokenId))));
-      req.add("path", "data,result");
-      
+
+      Chainlink.Request memory req = buildChainlinkRequest(_jobId, address(this), this.fulfillBytes.selector);
+      req.add("id", string(getTokenAttributeString(tokenId)));
       bytes32 requestId = sendOperatorRequest(req, payment);
       _requestMap[requestId] = tokenId;
+      return requestId;
     }
     
     event RequestFulfilled(bytes32 indexed requestId, bytes indexed data, uint256 indexed tokenId);
@@ -153,11 +157,6 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
       return buffer;
     }
     
-    //using baseURI to store the base path for the image request API
-    function _baseURI() internal view virtual override(ERC721) returns (string memory) {
-        return "https://everydayavatar.free.beeceptor.com/img/";
-    }
-    
     //build the json uri for the specified tokenId
     function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory)
     {
@@ -172,6 +171,9 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
           //values[i].toString(), 
           tokenNames[i],
           '"}');
+          if(i < attr.length-1) {
+            output = abi.encodePacked(output, ',');
+          }
         }
       
         string memory json = Base64.encode(bytes(string(abi.encodePacked(
@@ -179,7 +181,7 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
           ' #', 
           tokenId.toString(), 
           '", "description":"Everyday Avatars are a collection of profile picture NFTs that are completely customizable. You can freely modify and update your Avatar using the dApp. Attributes are stored on-chain and this amazing flexibility is powered by EIP-3664.", "image":"', 
-            super.tokenURI(tokenId),
+            _tokenURI(tokenId),
           '","attributes":['
           , output, 
           ']}'
@@ -187,7 +189,17 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
 
         return string(abi.encodePacked('data:application/json;base64,', json));
     }
-    
+
+    function _tokenURI(uint256 tokenId) internal view returns (string memory){
+      
+      //if the URIStorage value has been set, use that, otherwise create and use the baseURI
+      string memory ipfsTokenURI = ERC721URIStorage.tokenURI(tokenId);
+      if(bytes(ipfsTokenURI).length > 0) {
+        return ipfsTokenURI;
+      }
+      bytes memory assetString = getTokenAttributeString(tokenId);
+      return string(abi.encodePacked("https://everydayavatarapi.herokuapp.com/view-avatar/",assetString));
+    }
     
     //update the minting fee, need to keep the price at $10 usd range (using a price feeds oracle for this with a keeper to update automatically)
     function updateFee() public {
