@@ -6,8 +6,7 @@ export default function MintModifyNftLayout(props) {
   return (
     <Flex
       direction="column"
-      align="center"
-      maxW={{ xl: "1200px" }}
+      align="center" 
       m="0 auto"
       {...props}
     >

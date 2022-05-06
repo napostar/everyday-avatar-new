@@ -1,13 +1,13 @@
-import React from 'react'
-import MintModifyNftLayout from '../components/layouts/MintModifyNftLayout'
-import MintAvatar from '../components/sections/MintAvatar'
+import React from "react";
+import MintModifyNftLayout from "../components/layouts/MintModifyNftLayout";
+import MintAvatar from "../components/sections/MintAvatar";
 
 const MintModify = () => {
   return (
     <MintModifyNftLayout>
-        <MintAvatar/>
+      <MintAvatar/>
     </MintModifyNftLayout>
-  )
-}
+  );
+};
 
-export default MintModify
+export default MintModify;

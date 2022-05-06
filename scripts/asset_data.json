@@ -1,0 +1,359 @@
+{
+   "folderCID":"QmcBLXXUwuX6mHibqDxxwMzYrPi9uPhjDkeR44NC3gVMX4",
+   "categories":[
+      {
+         "categoryId":1,
+         "name":"BACKGROUND"
+      },
+      {
+         "categoryId":2,
+         "name":"HEAD"
+      },
+      {
+         "categoryId":3,
+         "name":"FACE"
+      },
+      {
+         "categoryId":4,
+         "name":"CLOTHES"
+      }
+   ],
+   "assets":[
+      {
+         "assetId":1,
+         "categoryId":4,
+         "cid":"QmbDVmK8LBzffBLagX3cxDznTo4yGcBoTx8p38veb8tZUe",
+         "name":"Cool Tee"
+      },
+      {
+         "assetId":2,
+         "categoryId":4,
+         "cid":"QmTDu2zE5rSWFR1WLyC25nM4eux3hV214aj6R3TcUsMwJn",
+         "name":"Punk 1"
+      },
+      {
+         "assetId":3,
+         "categoryId":4,
+         "cid":"QmXuDwghFwxjWDpCLpr39auJmZHmoHAUzJuewkBVMQMq76",
+         "name":"Nerd"
+      },
+      {
+         "assetId":4,
+         "categoryId":4,
+         "cid":"QmNicgsjM8mBcYdZCKV8DZfR1uDuh24WC8d3p2ns4y1FVg",
+         "name":"Peace"
+      },
+      {
+         "assetId":5,
+         "categoryId":4,
+         "cid":"QmaSG9SY5na7C6utv8Vdnyegu3hYeKCX5CTPDJ7g2SVH9H",
+         "name":"Punk 2"
+      },
+      {
+         "assetId":6,
+         "categoryId":4,
+         "cid":"QmbmWnDvSb1j6Z4UJ5kiZ5fyZ2ckKaX6FD1nmwftnxVRsn",
+         "name":"Sport 1"
+      },
+      {
+         "assetId":7,
+         "categoryId":4,
+         "cid":"QmS7EK3FRLSwMXLwKyrnLE6Jf1ThMPzRGPv7BZrBf84LB9",
+         "name":"Plain Tee"
+      },
+      {
+         "assetId":8,
+         "categoryId":4,
+         "cid":"QmfPCMkbSDUBRSkBWVfW8ztpgLdfewMjqAwLLYY6ADpktk",
+         "name":"Sport 2"
+      },
+      {
+         "assetId":9,
+         "categoryId":2,
+         "cid":"QmVzDruPKhdqR83hcwJKorj8VNJCrkVFWoaqcCFWA7qPBC",
+         "name":"Santa Cap"
+      },
+      {
+         "assetId":10,
+         "categoryId":2,
+         "cid":"QmZ2NuZ67wb9GDbEpjhK1t5zHRJiattqRUsUwRrrruyz6k",
+         "name":"Party Hat"
+      },
+      {
+         "assetId":11,
+         "categoryId":2,
+         "cid":"QmXHxgjw5v2TJwBTYa7nkb5S9rLWpEomcKVkF4RUUZ6PV2",
+         "name":"Headband"
+      },
+      {
+         "assetId":12,
+         "categoryId":2,
+         "cid":"QmUK3icUGSrgihZQ2auuwGkc3B4Fpi953gWtAzDhrXQb2N",
+         "name":"Hair Fluff"
+      },
+      {
+         "assetId":13,
+         "categoryId":2,
+         "cid":"Qmb29KT8s5YS8zDcpVMetV2QSyUFo5CbRLehPmRcVfHJqJ",
+         "name":"Hair Part Right"
+      },
+      {
+         "assetId":14,
+         "categoryId":2,
+         "cid":"QmbiUhqmWmgeuywoYRgQykvypMvXGyks9MxMwWe8o79HZA",
+         "name":"Hair Part Left"
+      },
+      {
+         "assetId":15,
+         "categoryId":2,
+         "cid":"QmPefpDV5xzktrts9qXg5DH89F9RZVf5xaA1m66dxT5AH3",
+         "name":"Hair Bun"
+      },
+      {
+         "assetId":16,
+         "categoryId":2,
+         "cid":"QmaPWZBjxusPox8PQwgnLsaCaCQmz4w8kF86VkVWAJxcUJ",
+         "name":"Cap 1"
+      },
+      {
+         "assetId":17,
+         "categoryId":2,
+         "cid":"QmPdfUTgAhVMRjqatgwqjrj1hZFwYXiHfRwanXAvcSNWZc",
+         "name":"Hero Mask"
+      },
+      {
+         "assetId":18,
+         "categoryId":2,
+         "cid":"QmV9ChuYyTvnZCM5GcjjigqqHMhTAVuSWui7AaVjTFY3mX",
+         "name":"Cool Hair"
+      },
+      {
+         "assetId":19,
+         "categoryId":2,
+         "cid":"Qmdfpsub47wP3q6FzHPvk1RqbeacVrkcBcXze8vG8RqPTU",
+         "name":"Rasta"
+      },
+      {
+         "assetId":20,
+         "categoryId":2,
+         "cid":"QmUKCDKPdZ5WDgk3wr6ixshfg5iZ1Poy7y2oGmvGy11Tbn",
+         "name":"Mowhawk"
+      },
+      {
+         "assetId":21,
+         "categoryId":2,
+         "cid":"QmZjPtpe6W2ucYbP7ZdmcvKhXQabdhwY5wFskknwDJttPB",
+         "name":"Peace Locks"
+      },
+      {
+         "assetId":22,
+         "categoryId":2,
+         "cid":"QmdBxvwNm99fM4pZ4nkD5qZVeBY2zeBCYqwyqptvYW7ZTC",
+         "name":"Cap 2"
+      },
+      {
+         "assetId":23,
+         "categoryId":2,
+         "cid":"QmbBrh36mwu2Gm55RdhSovRQTVhdcTrWgeHdbVtvfcNPHq",
+         "name":"Headphones"
+      },
+      {
+         "assetId":24,
+         "categoryId":3,
+         "cid":"QmU8khvcET61nWiQwPbfCXNSjqUzN2iQarW3o2K7vSpGjt",
+         "name":"Facemask"
+      },
+      {
+         "assetId":25,
+         "categoryId":3,
+         "cid":"QmSzs3JDhxU2qvzJ8zQ5qndwYMcpe2Hv25Jwh6t8dhiAuB",
+         "name":"Sunglasses"
+      },
+      {
+         "assetId":26,
+         "categoryId":3,
+         "cid":"QmdQaHVaaVDokPdxeuSVGRPb3ovgwjkg5WKXf7j1cHU2oq",
+         "name":"Round Glasses"
+      },
+      {
+         "assetId":27,
+         "categoryId":3,
+         "cid":"QmVKY8Z9Xjoy4wQS9sMjMrGadBuffbAxCKTgVB7s7ksDDi",
+         "name":"Sleep Mask"
+      },
+      {
+         "assetId":28,
+         "categoryId":3,
+         "cid":"QmR3EnWpQrMk9dzCGaty82Wert8FGRFnJAriHDZY4b1EV7",
+         "name":"Goggles"
+      },
+      {
+         "assetId":29,
+         "categoryId":3,
+         "cid":"QmTbu3PFoCvEKuean3jxVznumgGB4m16LD312vvQiaNqpK",
+         "name":"Old Glasses"
+      },
+      {
+         "assetId":30,
+         "categoryId":1,
+         "cid":"QmYp1JpKFphxJy4brJ43V6u9iLeyqt8vbmfK6ghaz7prcj",
+         "name":"Faded Green"
+      },
+      {
+         "assetId":31,
+         "categoryId":1,
+         "cid":"QmcgS2vvoJ2uJJhttod9i4AHvthNFrCFUnoaq6XNZ182Nz",
+         "name":"Faded Red"
+      },
+      {
+         "assetId":32,
+         "categoryId":1,
+         "cid":"QmZFdjTu5VcdeEHgaGAiuB9tiiRThCktUhpe6oEeX8etse",
+         "name":"Faded Blue"
+      },
+      {
+         "assetId":33,
+         "categoryId":1,
+         "cid":"QmPG9BofYC8gupuG3f6Gwik2wmMbWoQ4g9KVXszbCEvrQm",
+         "name":"Faded Grey"
+      },
+      {
+         "assetId":34,
+         "categoryId":1,
+         "cid":"QmYqLD3Yze1YvtasPjccCc7gDEt3SnhHot56JHPcs6n89b",
+         "name":"Faded Black"
+      },
+      {
+         "assetId":35,
+         "categoryId":1,
+         "cid":"QmSx84fqvgF5f8XgAnTP2wUn2j7ogii2BfNhQS7V4g7q4N",
+         "name":"Faded Brown"
+      },
+      {
+         "assetId":36,
+         "categoryId":1,
+         "cid":"QmVrUSmMyDGT721cJ7erYNwTDkwzHWcQykZMNAsFFRCU2y",
+         "name":"Faded Yellow"
+      },
+      {
+         "assetId":37,
+         "categoryId":1,
+         "cid":"QmbXuN7av8wvN37tZohn2AQ2h8tBwiLSnbN95dT6e3Ecd4",
+         "name":"Faded Cyan"
+      },
+      {
+         "assetId":38,
+         "categoryId":1,
+         "cid":"QmcFkcytNrgjUP2NiZQo4LahsiJyz4wTPYtiei42fXkAWh",
+         "name":"Faded Purple"
+      },
+      {
+         "assetId":39,
+         "categoryId":1,
+         "cid":"QmWCAx3sBdtrEjixoKM3FuQRXDL3EmajpK5z4wMLR2MS4N",
+         "name":"Faded Navy"
+      },
+      {
+         "assetId":40,
+         "categoryId":1,
+         "cid":"QmPghhEUQqh7zHB5yxpYUd4LaSithBDrcu8sZN8FR88tZ9",
+         "name":"Faded Magenta"
+      },
+      {
+         "assetId":41,
+         "categoryId":1,
+         "cid":"QmRyaMU8Lw6MABQYCayu6GDG1d5wkVksYcvkSfZLY3C81s",
+         "name":"Faded Tan"
+      },
+      {
+         "assetId":42,
+         "categoryId":1,
+         "cid":"QmVjjcK1r9msKZn4nhAzez9XAFCSrU9rZUaQkUuCPgDRbu",
+         "name":"White"
+      },
+      {
+         "assetId":43,
+         "categoryId":1,
+         "cid":"QmaoRoCRCyMoB9uQ41YwVakquUm8zadrZN12y7BHS2HQoK",
+         "name":"Orange"
+      },
+      {
+         "assetId":44,
+         "categoryId":1,
+         "cid":"QmctS1GB4mb3p7F7onsPvJNFd1munM1iMgXSv18QxAfX9G",
+         "name":"Green"
+      },
+      {
+         "assetId":45,
+         "categoryId":1,
+         "cid":"QmfNmbnFRkm1WhN5vakk7HrqdZYRAFpF5EcUhPtdPDpTXk",
+         "name":"Light Green"
+      },
+      {
+         "assetId":46,
+         "categoryId":1,
+         "cid":"QmZFjk9GvYjzSc6pTZGSTmduFe7NSZCa67D6xrbBtA2HgY",
+         "name":"Dark Grey"
+      },
+      {
+         "assetId":47,
+         "categoryId":1,
+         "cid":"Qmbpa3zcZ1FJbzxnCgnzwgEdQiHwkeBMYG3SjNMh7dNMxg",
+         "name":"Blue"
+      },
+      {
+         "assetId":48,
+         "categoryId":1,
+         "cid":"QmVbT4iUrkj9wZ5pomMiirFWzGUuqVxMKt9ExiepZ2gQDV",
+         "name":"Red"
+      },
+      {
+         "assetId":49,
+         "categoryId":1,
+         "cid":"QmNj7EwwWZJaXEXxhqRSCqSkra5VCTeRrn6Vhd9grik8AF",
+         "name":"Cyan"
+      },
+      {
+         "assetId":50,
+         "categoryId":1,
+         "cid":"QmWiJuoQKLSLVzrYnskNotW54aJkiQUTb37EDStnWJFT4h",
+         "name":"Black"
+      },
+      {
+         "assetId":51,
+         "categoryId":1,
+         "cid":"QmRFGbtSpN3n3g6ozAhwqycZhYqK6RuvpLKPfr6L8YxUCx",
+         "name":"Dark Cyan"
+      },
+      {
+         "assetId":52,
+         "categoryId":1,
+         "cid":"QmZuzGuTa7XsD5ma9NHj1vSxxnxcsxGT4M7gVR7P8pCJwo",
+         "name":"Burgendy"
+      },
+      {
+         "assetId":53,
+         "categoryId":1,
+         "cid":"QmagCC5VpMUdzQXEJ6YHV7giGuX2E441rYANFXuBaLHygJ",
+         "name":"Gold"
+      },
+      {
+         "assetId":54,
+         "categoryId":1,
+         "cid":"QmVGwYY7p9CFAMKNmeBGb5VC8SNKe5hfQmTccmCswGf5Nr",
+         "name":"Light Tan"
+      },
+      {
+         "assetId":55,
+         "categoryId":1,
+         "cid":"Qmcy74TVkSQWvYon2ZpF52rayzu8tDuSWkCS9GCmJ5CJAe",
+         "name":"Parchment"
+      },
+      {
+         "assetId":56,
+         "categoryId":1,
+         "cid":"QmZUV7WjVDChRa6Gu7pqNuFCeu19dZfrg6PkEW6DCL3K2F",
+         "name":"Light Blue"
+      }
+   ]
+}
