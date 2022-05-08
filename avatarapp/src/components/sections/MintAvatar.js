@@ -56,7 +56,7 @@ export default function MintAvatar() {
 
   const getSrcObj = async (category) => {
     if(category !== null){
-      const base64Strng = await imageToBase64(`https://ipfs.io/ipfs/${category.cid}`)
+      const base64Strng = await imageToBase64(require(`../../avatarComponents/${category.assetId}.png`).default)
       const categoryIdx = avatarData.findIndex(a => a.categoryId === category.categoryId);
       if(categoryIdx !== -1) {
         let tmp = [...avatarData];
