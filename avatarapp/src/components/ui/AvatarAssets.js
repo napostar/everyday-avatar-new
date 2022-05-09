@@ -21,7 +21,7 @@ const AvatarAssets = ({ category, assets, makeAvatarHandler, selectedAsset }) =>
           bg="grey"
           size={"2xl"}
           src={
-            `https://ipfs.io/ipfs/${asset.cid}`
+            require(`../../avatarComponents/${asset.assetId}.png`).default
           }
           alt={asset.name}
           mb={4}

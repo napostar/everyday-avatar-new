@@ -1,11 +1,11 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Box, Flex, Text, Button, useColorMode } from "@chakra-ui/react";
+import { Box, Flex, Text, Button, useColorMode, useToast } from "@chakra-ui/react";
 //import { MoonIcon, SunIcon } from "@chakra-ui/icons";
 import Logo from "../ui/Logo";
-import {
-  ConnectButton,
-} from "web3uikit";
+//import MagicLoginForm from "../ui/MagicLoginForm";
+import { useMoralis, useMoralisWeb3Api } from "react-moralis";
+import { CHAIN_IDS_TO_NAMES } from "../../utils/supportedChains";
 
 const MenuItem = ({ children, isLast, to = "/", ...rest }) => {
   return (
@@ -41,12 +41,89 @@ const MenuIcon = () => (
     <path d="M0 3h20v2H0V3zm0 6h20v2H0V9zm0 6h20v2H0v-2z" />
   </svg>
 );
-
+ 
 const Header = (props) => {
+  const toast = useToast();
+  const [accountBalance, setAccountBalance] = useState(0);
   const [show, setShow] = React.useState(false);
   const toggleMenu = () => setShow(!show);
+  const {colorMode} = useColorMode();
+  const Web3Api = useMoralisWeb3Api();
+  const {isAuthenticated, isInitialized, Moralis, user, authenticate, logout, isAuthenticating, web3, isWeb3Enabled, enableWeb3,chainId, authError} = useMoralis();
 
-  //const {colorMode, toggleColorMode} = useColorMode();
+  useEffect(() => {
+    (async()=>{
+      await enableWeb3()
+    })()
+  },[]);
+
+
+  useEffect(() => {
+    if(authError){
+      toast({
+        title: 'Error',
+        description: authError.message,
+        status: 'error',
+        position: 'bottom-right',
+        duration: 9000,
+        isClosable: true,
+      })
+    }
+  },[authError])
+
+  useEffect(() => {
+    if(isWeb3Enabled){
+      Moralis.onChainChanged(function (chain) {
+        window.location.reload()
+      });
+  
+      Moralis.onAccountChanged(function (address) {
+        console.log(address);
+      });
+    }
+  }, [isWeb3Enabled]);
+  
+  useEffect(() => {
+    if((isInitialized) && (isAuthenticated) && (isWeb3Enabled)) {
+      (async()=>{
+        const balance = await Web3Api.account.getNativeBalance({ chain: chainId });
+        console.log('Chain',chainId)
+        setAccountBalance(Moralis.Units.FromWei(balance.balance));
+      })()
+    }
+  },[isInitialized, isAuthenticated, isWeb3Enabled])
+
+  useEffect(() => {
+    if(isWeb3Enabled){
+      (async () => {
+        if(isAuthenticated){
+          const network = await web3.getNetwork();
+          console.log(network)
+          if(typeof CHAIN_IDS_TO_NAMES[network.chainId] === 'undefined'){
+            toast({
+              title: 'Network not supported.',
+              description: "Please switch to polygon network.",
+              status: 'error',
+              position: 'bottom-right',
+              duration: 9000,
+              isClosable: true,
+            })
+            await logout()
+          }
+        }
+      })()
+    }
+  },[isWeb3Enabled, isAuthenticated])
+
+  const loginMetaMaskHandler = async () => {
+    if(!isAuthenticated){
+      await authenticate({signingMessage:"SignIn To EveryDay Avatar"});
+    }
+  }
+
+  const logoutHandler = async () => {
+    await logout();
+  }
   
   return (
     <Flex
@@ -82,40 +159,40 @@ const Header = (props) => {
           direction={["column", "row", "row", "row"]}
           pt={[4, 4, 0, 0]}
         >
+
           {/* <MenuItem>
-            <Button
-              onClick={() => toggleColorMode()}
-              pos="absolute"
-              bottom="0"
-              right="0"
-              m="1rem"
-            >
-              {colorMode === "dark" ? (
-                <SunIcon color="orange.200" />
-              ) : (
-                <MoonIcon color="blue.700" />
-              )}
-            </Button>
+              <MagicLoginForm/>
           </MenuItem> */}
 
-         
-              <ConnectButton/>
-          {/* <MenuItem isLast>
-            <Button
-              size="sm"
-              rounded="md"
-              color={["primary.500", "primary.500", "white", "white"]}
-              bg={(colorMode === 'dark')?"customB.500":"primary.500"}
-              _hover={{
-                bg: ["primary.100", "primary.100", "primary.600", "primary.600"]
-              }}
-              onClick={() => {
-                  console.log(isAuthenticated);
-              }}
-            >
-              Connect Wallet
-            </Button>
-          </MenuItem> */}
+          <MenuItem isLast>
+            {(isAuthenticated && user)? 
+              <Button
+                size="sm"
+                rounded="md"
+                color={["primary.500", "primary.500", "white", "white"]}
+                bg={(colorMode === 'dark')?"customB.500":"primary.500"}
+                _hover={{
+                  bg: ["primary.100", "primary.100", "primary.600", "primary.600"]
+                }}
+                onClick={logoutHandler}
+              >
+                {accountBalance} - {`${user.attributes.ethAddress.slice(0, 4)}...${user.attributes.ethAddress.slice(38)}`}
+              </Button> : (
+              <Button
+                size="sm"
+                rounded="md"
+                color={["primary.500", "primary.500", "white", "white"]}
+                bg={(colorMode === 'dark')?"customB.500":"primary.500"}
+                _hover={{
+                  bg: ["primary.100", "primary.100", "primary.600", "primary.600"]
+                }}
+                onClick={loginMetaMaskHandler}
+                isLoading={isAuthenticating}
+              >
+                Connect Wallet
+              </Button>
+            )}
+          </MenuItem>
           
         </Flex>
       </Box>
