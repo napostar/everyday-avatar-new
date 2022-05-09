@@ -108,6 +108,7 @@ const Header = (props) => {
               duration: 9000,
               isClosable: true,
             })
+            await logout()
           }
         }
       })()

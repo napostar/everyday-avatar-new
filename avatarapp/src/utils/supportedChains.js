@@ -5,5 +5,5 @@ const SupportedChainId = {
 
 export const CHAIN_IDS_TO_NAMES = {
   [SupportedChainId.POLYGON]: "polygon",
-  [SupportedChainId.POLYGON_MUMBAI]: "polygon_mumbai",
+  [SupportedChainId.POLYGON_MUMBAI]: "polygon_mumbai"
 };
