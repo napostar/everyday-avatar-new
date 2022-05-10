@@ -1,22 +1,26 @@
 import React, { useState, useEffect } from "react";
 import {
-  Flex,
   Stack,
   Image,
   Text,
   Button,
   useColorMode,
-  Grid,
-  GridItem,
+  Divider,
   Spinner,
   useToast,
+  Container,
+  SimpleGrid
 } from "@chakra-ui/react";
 import components from "../../assets.json";
 import AvatarAssets from "../ui/AvatarAssets";
 import mergeImages from "merge-images";
 import imageToBase64 from "image-to-base64/browser";
-import {useMoralis, useWeb3ExecuteFunction } from "react-moralis";
-import everyDayAvatar from '../../contract/EverydayAvatar.json';
+import {
+  useMoralis,
+  useWeb3ExecuteFunction
+} from "react-moralis";
+import everyDayAvatar from "../../contract/EverydayAvatar.json";
+import Mints from "./Mints";
 
 export default function MintAvatar() {
   const toast = useToast();
@@ -66,37 +70,35 @@ export default function MintAvatar() {
   const CLOTHES = components.assets.filter((asset) => asset.categoryId === C);
 
   const { data, error, fetch, isFetching } = useWeb3ExecuteFunction();
-  const {isAuthenticated, user} = useMoralis();
+  const { isAuthenticated, user } = useMoralis();
 
   useEffect(() => {
-    if(data){
-      console.log(data);
-      if(typeof data.hash !== 'undefined'){
+    if (data) {
+      if (typeof data.hash !== "undefined") {
         toast({
-          title: 'Avatar Minted',
+          title: "Avatar Minted",
           description: `Txn ${data.hash}`,
-          status: 'success',
-          position: 'bottom-right',
+          status: "success",
+          position: "bottom-right",
           duration: 9000,
           isClosable: true,
-        })
+        });
       }
     }
-  },[data])
+  }, [data]);
 
   useEffect(() => {
-    if(error){
+    if (error) {
       toast({
-        title: 'Error',
+        title: "Error",
         description: error.message,
-        status: 'error',
-        position: 'bottom-right',
+        status: "error",
+        position: "bottom-right",
         duration: 9000,
         isClosable: true,
-      })
+      });
     }
-  },[error])
-
+  }, [error]);
 
   useEffect(() => {
     generateAva();
@@ -178,18 +180,17 @@ export default function MintAvatar() {
 
   //Mint NFT Transaction
   const mintNowHandler = async () => {
-    if(!isAuthenticated){
+    if (!isAuthenticated) {
       toast({
-        title: 'Error',
-        description: 'Please connect your wallet',
-        status: 'error',
-        position: 'bottom-right',
+        title: "Error",
+        description: "Please connect your wallet",
+        status: "error",
+        position: "bottom-right",
         duration: 9000,
         isClosable: true,
-      })
+      });
       return;
     }
-    
 
     const assets = [
       newAvatar.bg.assetId,
@@ -199,20 +200,20 @@ export default function MintAvatar() {
     ];
 
     let options = {
-      contractAddress: "0x0616307a6c7a9241c8123b38c82e541204d9f075",
+      contractAddress: process.env.REACT_APP_CONTRACT_ADDRESS,
       functionName: "mintAvatar",
       abi: everyDayAvatar.abi,
       params: {
         to: user.attributes.ethAddress,
-        attrId: [BG,H,F,C],
-        attrValue: assets
-      }
+        attrId: [BG, H, F, C],
+        attrValue: assets,
+      },
       //msgValue: Moralis.Units.ETH(10),
-    }
+    };
 
-    const mintTxn = await fetch({params: options});
-    if(mintTxn){
-      await mintTxn.wait()
+    const mintTxn = await fetch({ params: options });
+    if (mintTxn) {
+      await mintTxn.wait(1);
     }
   };
 
@@ -221,8 +222,8 @@ export default function MintAvatar() {
   }
 
   return (
-    <Stack minH={"60vh"} direction={{ base: "column", md: "row" }}>
-      <Flex p={8} flex={1} align={"left"} justify={"left"}>
+    <Container maxW={"6xl"} py={12}>
+      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={10}>
         <Stack spacing={4} w={"full"} maxW={"md"}>
           <Text fontSize="2xl">Backgrounds</Text>
           <AvatarAssets
@@ -256,53 +257,49 @@ export default function MintAvatar() {
             selectedAsset={newAvatar.clothes}
           />
         </Stack>
-      </Flex>
-      <Flex>
-        <Grid gap={2} p={1}>
-          <GridItem rowSpan={2}>
-            {src !== null ? (
-              <Image id="your-avatar" alt={"Your Avatar"} src={src} />
-            ) : (
-              <div
-                style={{
-                  padding: "200px",
-                }}
-              >
-                <Spinner
-                  thickness="4px"
-                  speed="0.90s"
-                  emptyColor="gray.200"
-                  color="blue.500"
-                  size="xl"
-                />
-              </div>
-            )}
-
-            <Button
-              mt={5}
-              bg={colorMode === "dark" ? "customB.500" : "primary.500"}
-              color={["white"]}
-              _hover={{
-                bg: [
-                  "primary.100",
-                  "primary.100",
-                  "primary.600",
-                  "primary.600",
-                ],
+        <Stack>
+          {src !== null ? (
+            <Image id="your-avatar" alt={"Your Avatar"} src={src} />
+          ) : (
+            <div
+              style={{
+                padding: "200px",
               }}
-              borderRadius="8px"
-              py="4"
-              px="4"
-              lineHeight="1"
-              size="md"
-              onClick={mintNowHandler}
-              isLoading={isFetching}
             >
-              Mint Avatar
-            </Button>
-          </GridItem>
-        </Grid>
-      </Flex>
-    </Stack>
+              <Spinner
+                thickness="4px"
+                speed="0.90s"
+                emptyColor="gray.200"
+                color="blue.500"
+                size="xl"
+              />
+            </div>
+          )}
+
+          <Button
+            pt={8}
+            mt={5}
+            bg={colorMode === "dark" ? "customB.500" : "primary.500"}
+            color={["white"]}
+            _hover={{
+              bg: ["primary.100", "primary.100", "primary.600", "primary.600"],
+            }}
+            borderRadius="8px"
+            py="4"
+            px="4"
+            lineHeight="1"
+            size="md"
+            onClick={mintNowHandler}
+            isLoading={isFetching}
+          >
+            Mint Avatar
+          </Button>
+        </Stack>
+      </SimpleGrid>
+
+      <Divider mt="4"/>
+      <Mints/>
+
+    </Container>
   );
 }

@@ -74,11 +74,17 @@ const Header = (props) => {
   useEffect(() => {
     if(isWeb3Enabled){
       Moralis.onChainChanged(function (chain) {
-        window.location.reload()
+        if(isAuthenticated){
+          window.location.reload()
+        }
+        
       });
   
-      Moralis.onAccountChanged(function (address) {
-        console.log(address);
+      Moralis.onAccountChanged(async(address)=>{
+        if(isAuthenticated){
+          await logout()
+          window.location.reload()
+        }
       });
     }
   }, [isWeb3Enabled]);
@@ -87,7 +93,6 @@ const Header = (props) => {
     if((isInitialized) && (isAuthenticated) && (isWeb3Enabled)) {
       (async()=>{
         const balance = await Web3Api.account.getNativeBalance({ chain: chainId });
-        console.log('Chain',chainId)
         setAccountBalance(Moralis.Units.FromWei(balance.balance));
       })()
     }
@@ -98,7 +103,6 @@ const Header = (props) => {
       (async () => {
         if(isAuthenticated){
           const network = await web3.getNetwork();
-          console.log(network)
           if(typeof CHAIN_IDS_TO_NAMES[network.chainId] === 'undefined'){
             toast({
               title: 'Network not supported.',
