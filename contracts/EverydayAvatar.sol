@@ -16,20 +16,14 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Base64.sol";
+
 import "./ERC3664/extensions/ERC3664Updatable.sol";
 //import "https://github.com/napostar/EIP-3664/blob/main/contracts/extensions/ERC3664Updatable.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
+import "@opengsn/contracts/src/BaseRelayRecipient.sol";
 
-library AvatarData {
-
-    //List of attribute/nft part categories (Using Invisible Friends demo content)   
-    uint constant BACKGROUND = 1;
-    uint constant HEAD = 2;
-    uint constant FACE = 3;
-    uint constant CLOTHES = 4;
-}
-
+//interface for Avatar Data Contract
 interface IAvatarData  {
     function componentNames(uint[] memory attrValues) external view returns(string[] memory);
 }
@@ -38,31 +32,45 @@ interface IAvatarData  {
  * The Everyday Avatar project was designed with the following requirements/features:
  *   -Unlimited mints (technically limited to the range of uint256...)
  *   -Customizable On-Chain Attributes with the power of EIP-3664
- *     -Using the value of ERC3664 attributes to represent the assetId for the nft collection
- *   -Utilizes Chainlink Any-API to update the token's IPFS image when it's visual attributes are changed
- *   - 
+ *     -Using the value of ERC3664 attributes to represent the individual assetId for the nft collection
+ *   -Utilizes Chainlink Any-API Large Responses to update a token's IPFS image when creating on-chain snapshot
+ *   -Reads a Chainlink MATIC-USD price feed to keep mints pegged to a specific value in USD
+ *   -Supports the openGSN EIP-2771 Gassless/Meta Transactions
+ *   -
  */
-contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, ChainlinkClient {
+contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, BaseRelayRecipient, ChainlinkClient   {
     using Counters for Counters.Counter;
     using Chainlink for Chainlink.Request;
     using Strings for uint256;
 
+    //List of attribute/nft part categories (Using Invisible Friends demo content)   
+    uint constant BACKGROUND = 1;
+    uint constant HEAD = 2;
+    uint constant FACE = 3;
+    uint constant CLOTHES = 4;
+    uint constant ATTR_COUNT = 4;
+
+    //tokenId counter
     Counters.Counter private _tokenIdCounter;
     
+    //Avatar Data contract
     IAvatarData compData;
+    
+    //Price feed for consistent mint prices
     AggregatorV3Interface internal priceFeed;
     
     //mint fee can be updated by contract owner
     uint256 public mintFee;
     
+    //mapping requestId to tokenId for getting IPFS hashes
     mapping(bytes32 => uint256) private _requestMap;
 
     constructor(address dataContract) ERC721("Everyday Avatar", "EA") ERC3664("") {
       //Create ERC3664 attribute categories (attributeID, name, symbol, uri)
-      ERC3664._mint(AvatarData.BACKGROUND, "bg", "Background", "");
-      ERC3664._mint(AvatarData.HEAD, "head", "Head", "");
-      ERC3664._mint(AvatarData.FACE, "face", "Face", "");
-      ERC3664._mint(AvatarData.CLOTHES, "clothes", "Clothes", "");
+      ERC3664._mint(BACKGROUND, "bg", "Background", "");
+      ERC3664._mint(HEAD, "head", "Head", "");
+      ERC3664._mint(FACE, "face", "Face", "");
+      ERC3664._mint(CLOTHES, "clothes", "Clothes", "");
       
       //initial mint fee will be 10 MATIC (~$15 usd) (deploying on Polygon)
       mintFee = 10 ether;
@@ -74,13 +82,23 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
       //mumbai matic/usd: 0xd0D5e3DB44DE05E9F294BB0a3bEEaF030DE24Ada
       priceFeed = AggregatorV3Interface(0xd0D5e3DB44DE05E9F294BB0a3bEEaF030DE24Ada);
       
+      //Chainlink Oracle for IPFS image CIDs
       setChainlinkToken(0x326C977E6efc84E512bB9C30f76E30c160eD06FB);
       setChainlinkOracle(0xedaa6962Cf1368a92e244DdC11aaC49c0A0acC37);
     }
-	
+
+    //TODO Add support for Opensea auto proxy approval
+    //TODO add Meta transaction support
+
     //mint an avatar with the provided attributes, which will come from the dApp UI (ie user selection)
+    //attrId = assetId
+    //attrValue = componentId
     function mintAvatar(address to, uint256[] memory attrId, uint256[] memory attrValue) public payable {
-		    //TODO add needed require checks
+        //require address isn't zero
+        //require and check payment
+        //require arrays are greater than zero, and less than ATRR_COUNT
+        //require values are the correct type for their attribute
+        
         uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
         _safeMint(to, tokenId);
@@ -88,9 +106,6 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
         for(uint i=0; i < attrId.length ; i++){
           ERC3664.attach(tokenId, attrId[i], attrValue[i]);
         }
-        
-        //query new image URI from oracle
-        //requestNewImage(tokenId);
     }
 
     //update token attributes (scoped to only the token owner)
@@ -118,11 +133,6 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
         else {
           increase(tokenId, attrId, abs(offsetAmount));
         }
-    }
-
-    //absolute value function, because it's not built-in to solidity :(
-    function abs(int256 x) private pure returns (uint256) {
-      return x >= 0 ? uint256(x) : uint256(-x);
     }
     
     //implement chainlink Any-API when attributes change
@@ -159,20 +169,7 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
       }
       return output;
     }
-    
-    /**
-     * @dev Converts a `uint256` to its ASCII `string` representation with a fixed length. Number will be truncated if larger than will fit in length digits.
-     */
-    function toFLString(uint256 value, uint256 length) internal pure returns (bytes memory) {
-      //this implementation is inspired by the Strings Library
-      bytes memory buffer = new bytes(length);
-      for(uint256 i = length ; i > 0 ; --i) {
-          buffer[i-1] = bytes1(uint8(48 + uint256(value % 10)));
-          value /= 10;
-      }
-      return buffer;
-    }
-    
+        
     //build the json uri for the specified tokenId
     function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory)
     {
@@ -234,6 +231,26 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
     function ownerWithdraw(address payable to) public onlyOwner {
       to.transfer(address(this).balance);
     }
+
+    //The following are internal helper functions
+
+    /**
+     * @dev Converts a `uint256` to its ASCII `string` representation with a fixed length. Number will be truncated if larger than will fit in length digits.
+     */
+    function toFLString(uint256 value, uint256 length) internal pure returns (bytes memory) {
+      //this implementation is inspired by the Strings Library
+      bytes memory buffer = new bytes(length);
+      for(uint256 i = length ; i > 0 ; --i) {
+          buffer[i-1] = bytes1(uint8(48 + uint256(value % 10)));
+          value /= 10;
+      }
+      return buffer;
+    }
+
+    //absolute value function, because it's not built-in to solidity :(
+    function abs(int256 x) private pure returns (uint256) {
+      return x >= 0 ? uint256(x) : uint256(-x);
+    }
     
     // The following functions are overrides required by Solidity.
 
@@ -244,5 +261,39 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
     function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC3664) returns (bool)
     {
         return ERC721.supportsInterface(interfaceId) || ERC3664.supportsInterface(interfaceId);
+    }
+
+    //The following functions are to support meta transactions
+
+    /**
+     * Optional setter for the trusted forwarder for openGSN
+     */
+     function setTrustedForwarder(address _trustedForwarder) public onlyOwner {
+       _setTrustedForwarder(_trustedForwarder);
+     }
+    
+    string public override versionRecipient = "2.2.0";
+
+    function _msgSender() internal view override(Context, BaseRelayRecipient)
+        returns (address sender) {
+        sender = BaseRelayRecipient._msgSender();
+    }
+
+    function _msgData() internal view override(Context, BaseRelayRecipient)
+        returns (bytes memory) {
+        return BaseRelayRecipient._msgData();
+    }
+
+    /**
+    * Override isApprovedForAll to auto-approve OS's proxy contract
+    */
+    function isApprovedForAll(address _owner, address _operator) public override view returns (bool isOperator) {
+      // if OpenSea's ERC721 Proxy Address is detected, auto-return true
+      if (_operator == address(0x58807baD0B376efc12F5AD86aAc70E78ed67deaE)) {
+        return true;
+      }
+
+      // otherwise, use the default ERC721.isApprovedForAll()
+      return ERC721.isApprovedForAll(_owner, _operator);
     }
 }
