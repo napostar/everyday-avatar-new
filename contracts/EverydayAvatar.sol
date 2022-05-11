@@ -26,7 +26,9 @@ import "@opengsn/contracts/src/BaseRelayRecipient.sol";
 //interface for Avatar Data Contract
 interface IAvatarData  {
     function componentNames(uint[] memory attrValues) external view returns(string[] memory);
+    function componentAttribute(uint componentId) external view returns(uint);
 }
+//TODO Update comments to NATSPEC format
 
 /**
  * The Everyday Avatar project was designed with the following requirements/features:
@@ -35,8 +37,7 @@ interface IAvatarData  {
  *     -Using the value of ERC3664 attributes to represent the individual assetId for the nft collection
  *   -Utilizes Chainlink Any-API Large Responses to update a token's IPFS image when creating on-chain snapshot
  *   -Reads a Chainlink MATIC-USD price feed to keep mints pegged to a specific value in USD
- *   -Supports the openGSN EIP-2771 Gassless/Meta Transactions
- *   -
+ *   -Supports the openGSN EIP-2771 Gassless/Meta Transactions (for onboarding)
  */
 contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, BaseRelayRecipient, ChainlinkClient   {
     using Counters for Counters.Counter;
@@ -65,6 +66,14 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
     //mapping requestId to tokenId for getting IPFS hashes
     mapping(bytes32 => uint256) private _requestMap;
 
+    //errors that could be thrown
+    error InsufficientPayment(uint256 requiredAmount);
+    error UnauthorizedOperator();
+    error BadArrayLength(uint256 length);
+    error AttributeArraysMismatch();
+    error InvalidAttributeValue(uint256 attributeId, uint256 attributeValue);
+    error DuplicateAttributes(uint256 attributeId);
+
     constructor(address dataContract) ERC721("Everyday Avatar", "EA") ERC3664("") {
       //Create ERC3664 attribute categories (attributeID, name, symbol, uri)
       ERC3664._mint(BACKGROUND, "bg", "Background", "");
@@ -87,60 +96,79 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
       setChainlinkOracle(0xedaa6962Cf1368a92e244DdC11aaC49c0A0acC37);
     }
 
-    //TODO Add support for Opensea auto proxy approval
-    //TODO add Meta transaction support
+    //validate attribute and value array inputs
+    modifier validateAttributeArrays(uint256[] memory attrId, uint256[] memory attrValue) {
+      //require arrays are  less than ATRR_COUNT
+      if(attrId.length > ATTR_COUNT)
+        revert BadArrayLength(attrId.length);
+
+      //require arrays to be the same length
+      if( (attrId.length != attrValue.length))
+        revert AttributeArraysMismatch();
+      
+      //require no duplicates in the attribute array
+      for(uint i=0; i < attrId.length ; i++){
+        for(uint j=i+1; j < attrId.length ; j++ ){
+          if(attrId[i] == attrId[j])
+            revert DuplicateAttributes(attrId[i]);
+        }
+      }
+
+      //require values are the correct type for their attribute
+      for(uint i=0; i < attrId.length ; i++){
+        if(compData.componentAttribute(attrValue[i]) != attrId[i])
+          revert InvalidAttributeValue(attrId[i], attrValue[i]);
+      }
+      _;
+    }
 
     //mint an avatar with the provided attributes, which will come from the dApp UI (ie user selection)
     //attrId = assetId
     //attrValue = componentId
-    function mintAvatar(address to, uint256[] memory attrId, uint256[] memory attrValue) public payable {
-        //require address isn't zero
+    function mintAvatar(address to, uint256[] memory attrId, uint256[] memory attrValue) public payable validateAttributeArrays(attrId, attrValue) {
         //require and check payment
-        //require arrays are greater than zero, and less than ATRR_COUNT
-        //require values are the correct type for their attribute
-        
+        if(msg.value < mintFee)
+          revert InsufficientPayment(mintFee);
+
         uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
         _safeMint(to, tokenId);
-              
         for(uint i=0; i < attrId.length ; i++){
           ERC3664.attach(tokenId, attrId[i], attrValue[i]);
         }
     }
 
     //update token attributes (scoped to only the token owner)
-    function updateAvatar(uint256 tokenId, uint256[] memory attrId, uint256[] memory attrValue) public {
-      //TODO validate user is owner using _msgSender(); (support meta transactions)
-      //TODO add needed require checks
+    function updateAvatar(uint256 tokenId, uint256[] memory attrId, uint256[] memory attrValue) public validateAttributeArrays(attrId, attrValue) {
+      //require user is owner using _msgSender()
+      if(_msgSender() != ownerOf(tokenId))
+        revert UnauthorizedOperator();
+
       for(uint i=0 ; i < attrId.length ; i++) {
         //Would be nice if ERC3664 had a setValue instead of just increase/decrease
-        updateAttribute(tokenId, attrId[i], attrValue[i]);
-      }
-
-      //query new image URI from oracle
-      //requestNewImage(tokenId);
-      //TODO clear existing value in uriStorage if present
-    }   
-
-    //update the value of an attribute to the given value, because a direct setter in ERC3664 doesn't exist :(
-    function updateAttribute(uint256 tokenId, uint256 attrId, uint256 newVal) internal {
-        uint256 amount = attrBalances[attrId][tokenId];
-        int256 offsetAmount = int256(amount) - int256(newVal);
+        uint256 amount = attrBalances[attrId[i]][tokenId];
+        int256 offsetAmount = int256(amount) - int256(attrValue[i]);
+        
         require(offsetAmount != 0, "Attribute value has not changed.");
         if(offsetAmount > 0) {
-          decrease(tokenId, attrId, abs(offsetAmount));
+          decrease(tokenId, attrId[i], abs(offsetAmount));
         }
         else {
-          increase(tokenId, attrId, abs(offsetAmount));
+          increase(tokenId, attrId[i], abs(offsetAmount));
         }
-    }
-    
-    //implement chainlink Any-API when attributes change
-    //when the avatar changes, generate a new image and save the IPFS hash
-    function requestNewImage(uint256 tokenId) public returns(bytes32){
+      }
+
+      //clear existing ipfs hash if any
+      if(bytes(ERC721URIStorage.tokenURI(tokenId)).length > 0)
+        _setTokenURI(tokenId, "");
+    }   
+
+    //when requested, generate a new image and save the IPFS hash
+    //using chainlink Any API Large Responses
+    function requestNewImage(uint256 tokenId) public returns(bytes32) {
       bytes32 _jobId = "04e9f8f6e4e8419e89d8d942566ef963";
       uint256 payment = 0;
-
+      //custom job calls backend api:  /make-avatar
       Chainlink.Request memory req = buildChainlinkRequest(_jobId, address(this), this.fulfillBytes.selector);
       req.add("id", string(getTokenAttributeString(tokenId)));
       bytes32 requestId = sendOperatorRequest(req, payment);
@@ -157,20 +185,20 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
     function fulfillBytes(bytes32 requestId, bytes memory bytesData) public recordChainlinkFulfillment(requestId) {
       uint256 tokenId = _requestMap[requestId];
       emit RequestFulfilled(requestId, bytesData, tokenId);
-      _setTokenURI(tokenId, string(abi.encodePacked("ipfs://",bytesData)));
+      _setTokenURI(tokenId, string(bytesData));
     }
     
     //generate the attribute string that will behave like the DNA for a given token.
     function getTokenAttributeString(uint256 tokenId) internal view returns(bytes memory){
       bytes memory output;
       //go through all the attribute categories
-      for(uint i=0 ; i < 4 ; i++) {
+      for(uint i=0 ; i < ATTR_COUNT ; i++) {
         output = abi.encodePacked(output,toFLString(balanceOf(tokenId, i+1), 4));
       }
       return output;
     }
         
-    //build the json uri for the specified tokenId
+    //build the json uri on-chain for the specified tokenId
     function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory)
     {
         uint256[] memory attr = attributesOf(tokenId);
@@ -180,8 +208,7 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
         string[] memory tokenNames = compData.componentNames(values);
 
         for(uint i=0 ; i < attr.length ; i++) {
-          output = abi.encodePacked(output, '{"trait_type":"', symbol(attr[i]), '","value":"', 
-          //values[i].toString(), 
+          output = abi.encodePacked(output, '{"trait_type":"', symbol(attr[i]), '","value":"',
           tokenNames[i],
           '"}');
           if(i < attr.length-1) {
@@ -203,15 +230,15 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
         return string(abi.encodePacked('data:application/json;base64,', json));
     }
 
-    function _tokenURI(uint256 tokenId) internal view returns (string memory){
-      
-      //if the URIStorage value has been set, use that, otherwise create and use the baseURI
+    //if the URIStorage value has been set, use that, otherwise create and use the baseURI
+    function _tokenURI(uint256 tokenId) internal view returns (bytes memory){
       string memory ipfsTokenURI = ERC721URIStorage.tokenURI(tokenId);
+
       if(bytes(ipfsTokenURI).length > 0) {
-        return ipfsTokenURI;
+        return abi.encodePacked("ipfs://",ipfsTokenURI);
       }
       bytes memory assetString = getTokenAttributeString(tokenId);
-      return string(abi.encodePacked("https://everydayavatarapi.herokuapp.com/view-avatar/",assetString));
+      return abi.encodePacked("https://everydayavatarapi.herokuapp.com/view-avatar/",assetString);
     }
     
     //update the minting fee, need to keep the price at $10 usd range (using a price feeds oracle for this with a keeper to update automatically)
