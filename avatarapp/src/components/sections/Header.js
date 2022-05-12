@@ -52,10 +52,12 @@ const Header = (props) => {
   const {isAuthenticated, isInitialized, Moralis, user, authenticate, logout, isAuthenticating, web3, isWeb3Enabled, enableWeb3,chainId, authError} = useMoralis();
 
   useEffect(() => {
-    (async()=>{
-      await enableWeb3()
-    })()
-  },[]);
+    if(!isWeb3Enabled){
+      (async()=>{
+        await enableWeb3()
+      })()
+    }
+  },[isWeb3Enabled]);
 
 
   useEffect(() => {
@@ -90,32 +92,48 @@ const Header = (props) => {
   }, [isWeb3Enabled]);
   
   useEffect(() => {
-    if((isInitialized) && (isAuthenticated) && (isWeb3Enabled)) {
-      (async()=>{
-        const balance = await Web3Api.account.getNativeBalance({ chain: chainId });
-        setAccountBalance(Moralis.Units.FromWei(balance.balance));
-      })()
+    let getB = true;
+      
+      if((isInitialized) && (isAuthenticated) && (isWeb3Enabled)) {
+        (async()=>{
+          const balance = await Web3Api.account.getNativeBalance({ chain: chainId });
+          if(getB) {
+            setAccountBalance(Moralis.Units.FromWei(balance.balance));
+          }
+        })()
+      }
+    
+    return () => {
+      getB = false;
     }
   },[isInitialized, isAuthenticated, isWeb3Enabled])
 
   useEffect(() => {
-    if(isWeb3Enabled){
-      (async () => {
-        if(isAuthenticated){
-          const network = await web3.getNetwork();
-          if(typeof CHAIN_IDS_TO_NAMES[network.chainId] === 'undefined'){
-            toast({
-              title: 'Network not supported.',
-              description: "Please switch to polygon network.",
-              status: 'error',
-              position: 'bottom-right',
-              duration: 9000,
-              isClosable: true,
-            })
-            await logout()
+    let getB = true;
+    
+      if(isWeb3Enabled){
+        (async () => {
+          if(isAuthenticated){
+            const network = await web3.getNetwork();
+            if(getB) {
+              if(typeof CHAIN_IDS_TO_NAMES[network.chainId] === 'undefined'){
+                toast({
+                  title: 'Network not supported.',
+                  description: "Please switch to polygon network.",
+                  status: 'error',
+                  position: 'bottom-right',
+                  duration: 9000,
+                  isClosable: true,
+                })
+                await logout()
+              }
+            }
           }
-        }
-      })()
+        })()
+      
+    }
+    return () => {
+      getB = false;
     }
   },[isWeb3Enabled, isAuthenticated])
 
