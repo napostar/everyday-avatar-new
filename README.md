@@ -1,42 +1,73 @@
-# Advanced Sample Hardhat Project
+# Everyday Avatar
 
-This project demonstrates an advanced Hardhat use case, integrating other tools commonly used alongside Hardhat in the ecosystem.
+Everyday Avatar is an NFT profile picture project, inspired by paper doll toys. Just like real paper dolls, this dynamic NFT project lets you swap out what your Avatar is wearing, or how it looks, whenever you want.
 
-The project comes with a sample contract, a test for that contract, a sample script that deploys that contract, and an example of a task implementation, which simply lists the available accounts. It also comes with a variety of other tools, preconfigured to work with the project code.
+We’ve built a dApp to mint new or modify existing Everyday Avatars. 
 
-Try running some of the following tasks:
+We've built the NFT using Solidity, with the attribute identifiers (IDs) stored on-chain. These attributes are tied to the individual components of the Avatar. This was done by leveraging the ERC-3664 standard for dynamic metadata attributes for NFTs.
 
-```shell
-npx hardhat accounts
-npx hardhat compile
-npx hardhat clean
-npx hardhat test
-npx hardhat node
-npx hardhat help
-REPORT_GAS=true npx hardhat test
-npx hardhat coverage
-npx hardhat run scripts/deploy.js
-node scripts/deploy.js
-npx eslint '**/*.js'
-npx eslint '**/*.js' --fix
-npx prettier '**/*.{json,sol,md}' --check
-npx prettier '**/*.{json,sol,md}' --write
-npx solhint 'contracts/**/*.sol'
-npx solhint 'contracts/**/*.sol' --fix
+To support awesome art, we decided to have the images generated off-chain, dynamically from the on-chain attributes. To minimize trust and the need for centralized servers, we built-in a 'snapshot' system where a token's image URI is replaced with a IPFS link.
+
+We have a hybrid system where some of the metadata is built in the smart contract directly and some data, like the image url, that points to our web server. (but only some of the time) Our web service can dynamically build and generate the avatar images, layer by layer, but also can pin the generated images live to IPFS (through infura) as the images are generated. 
+
+To minimize the trust, we decided to use Oracles to provide the IPFS data directly to our smart contract. While this is technically still a centralized solution, the hope is that this system of generating dynamic NFT token images can be standardized, and then implemented as a DON. (distributed oracle network)
+
+## Installation
+
+  
+
+Use the package manager [pip]([https://pip.pypa.io/en/stable/](https://pip.pypa.io/en/stable/)) to install foobar.
+
+  
+
+```bash
+
+pip install foobar
+
 ```
 
-# Etherscan verification
+  
 
-To try out Etherscan verification, you first need to deploy a contract to an Ethereum network that's supported by Etherscan, such as Ropsten.
+## Usage
 
-In this project, copy the .env.example file to a file named .env, and then edit it to fill in the details. Enter your Etherscan API key, your Ropsten node URL (eg from Alchemy), and the private key of the account which will send the deployment transaction. With a valid .env file in place, first deploy your contract:
+  
 
-```shell
-hardhat run --network ropsten scripts/deploy.js
+```python
+
+import foobar
+
+  
+
+# returns 'words'
+
+foobar.pluralize('word')
+
+  
+
+# returns 'geese'
+
+foobar.pluralize('goose')
+
+  
+
+# returns 'phenomenon'
+
+foobar.singularize('phenomena')
+
 ```
 
-Then, copy the deployment address and paste it in to replace `DEPLOYED_CONTRACT_ADDRESS` in this command:
+  
 
-```shell
-npx hardhat verify --network ropsten DEPLOYED_CONTRACT_ADDRESS "Hello, Hardhat!"
-```
+## Contributing
+
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+
+  
+
+Please make sure to update tests as appropriate.
+
+  
+
+## License
+
+[MIT]([https://choosealicense.com/licenses/mit/](https://choosealicense.com/licenses/mit/))

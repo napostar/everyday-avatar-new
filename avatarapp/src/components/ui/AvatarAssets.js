@@ -11,7 +11,7 @@ const AvatarAssets = ({ category, assets, makeAvatarHandler, selectedAsset }) =>
       {assets.map((asset, idx) => (
         <div key={idx} style={{padding: "2px"}}>
         <Avatar
-          style={((typeof selectedAsset.assetId !== "undefined") && (selectedAsset.assetId === asset.assetId))?selectedStyle:{}}
+          style={((selectedAsset) && (typeof selectedAsset.assetId !== "undefined") && (selectedAsset.assetId === asset.assetId))?selectedStyle:{}}
           onClick={() => makeAvatarHandler(category, asset)}
          _hover={{
             background: "white",

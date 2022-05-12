@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import {
   Stack,
   Image,
-  Text,
   Button,
   useColorMode,
   Divider,
@@ -11,8 +10,6 @@ import {
   Container,
   SimpleGrid
 } from "@chakra-ui/react";
-import components from "../../assets.json";
-import AvatarAssets from "../ui/AvatarAssets";
 import mergeImages from "merge-images";
 import imageToBase64 from "image-to-base64/browser";
 import {
@@ -21,6 +18,8 @@ import {
 } from "react-moralis";
 import everyDayAvatar from "../../contract/EverydayAvatar.json";
 import Mints from "./Mints";
+import avaAssets from "../../utils/avatarAssets";
+import AvatarBuilder from "../ui/AvatarBuilder";
 
 export default function MintAvatar() {
   const toast = useToast();
@@ -57,20 +56,10 @@ export default function MintAvatar() {
   const [src, setSrc] = useState(null);
   const { colorMode } = useColorMode();
 
-  const BG = 1;
-  const H = 2;
-  const F = 3;
-  const C = 4;
-
-  const BACKGROUNDS = components.assets.filter(
-    (asset) => asset.categoryId === BG
-  );
-  const HEAD = components.assets.filter((asset) => asset.categoryId === H);
-  const FACE = components.assets.filter((asset) => asset.categoryId === F);
-  const CLOTHES = components.assets.filter((asset) => asset.categoryId === C);
+  const {BG,H,F,C} = avaAssets();
 
   const { data, error, fetch, isFetching } = useWeb3ExecuteFunction();
-  const { isAuthenticated, user } = useMoralis();
+  const { isAuthenticated, user, Moralis } = useMoralis();
 
   useEffect(() => {
     if (data) {
@@ -89,9 +78,10 @@ export default function MintAvatar() {
 
   useEffect(() => {
     if (error) {
+      let message = (typeof error.data.message != undefined) ? error.data.message: error.message
       toast({
         title: "Error",
-        description: error.message,
+        description: message,
         status: "error",
         position: "bottom-right",
         duration: 9000,
@@ -101,7 +91,18 @@ export default function MintAvatar() {
   }, [error]);
 
   useEffect(() => {
-    generateAva();
+    let genAvatar = true;
+    (async () => {
+      const mergeArray = await generateAva();
+      if(genAvatar){
+        if(mergeArray.length){
+          setAvatarData([...mergeArray]);
+        }
+      }
+    })()
+    return () => {
+      genAvatar = false;
+    }
   }, [newAvatar]);
 
   const getSrcObj = async (category) => {
@@ -158,16 +159,24 @@ export default function MintAvatar() {
       mergeArray.push(clothesSrc);
     }
 
-    if (mergeArray.length) {
-      setAvatarData([...mergeArray]);
-    }
+    return mergeArray;
   };
 
   useEffect(() => {
+    let mAva = true;
+    
     if (avatarData.length) {
       mergeImages(avatarData)
-        .then((src) => setSrc(src))
+        .then((src) => {
+          if(mAva) {
+            setSrc(s => (s !== src)? src:s)
+          }
+        })
         .catch((err) => console.log(err));
+    }
+    
+    return () => {
+      mAva = false;
     }
   }, [avatarData]);
 
@@ -208,7 +217,7 @@ export default function MintAvatar() {
         attrId: [BG, H, F, C],
         attrValue: assets,
       },
-      //msgValue: Moralis.Units.ETH(10),
+      msgValue: Moralis.Units.ETH(Moralis.Units.FromWei("13")),
     };
 
     const mintTxn = await fetch({ params: options });
@@ -225,37 +234,7 @@ export default function MintAvatar() {
     <Container maxW={"6xl"} py={12}>
       <SimpleGrid columns={{ base: 1, md: 2 }} spacing={10}>
         <Stack spacing={4} w={"full"} maxW={"md"}>
-          <Text fontSize="2xl">Backgrounds</Text>
-          <AvatarAssets
-            assets={BACKGROUNDS}
-            makeAvatarHandler={makeAvatar}
-            category="bg"
-            selectedAsset={newAvatar.bg}
-          />
-
-          <Text fontSize="2xl">Head Accessories</Text>
-          <AvatarAssets
-            assets={HEAD}
-            makeAvatarHandler={makeAvatar}
-            category="head"
-            selectedAsset={newAvatar.head}
-          />
-
-          <Text fontSize="2xl">Face Accessories</Text>
-          <AvatarAssets
-            assets={FACE}
-            makeAvatarHandler={makeAvatar}
-            category="face"
-            selectedAsset={newAvatar.face}
-          />
-
-          <Text fontSize="2xl">Clothes</Text>
-          <AvatarAssets
-            assets={CLOTHES}
-            makeAvatarHandler={makeAvatar}
-            category="clothes"
-            selectedAsset={newAvatar.clothes}
-          />
+          <AvatarBuilder makeAvatar={makeAvatar} newAvatar={newAvatar}/>
         </Stack>
         <Stack>
           {src !== null ? (
@@ -292,7 +271,7 @@ export default function MintAvatar() {
             onClick={mintNowHandler}
             isLoading={isFetching}
           >
-            Mint Avatar
+            Mint New Avatar
           </Button>
         </Stack>
       </SimpleGrid>
