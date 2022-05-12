@@ -166,7 +166,7 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
     //when requested, generate a new image and save the IPFS hash
     //using chainlink Any API Large Responses
     function requestNewImage(uint256 tokenId) public returns(bytes32) {
-      bytes32 _jobId = "04e9f8f6e4e8419e89d8d942566ef963";
+      bytes32 _jobId = "56b3da0f8f874c8bab6532de71af54e9";
       uint256 payment = 0;
       //custom job calls backend api:  /make-avatar
       Chainlink.Request memory req = buildChainlinkRequest(_jobId, address(this), this.fulfillBytes.selector);
