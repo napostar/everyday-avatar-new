@@ -60,9 +60,12 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
     //Price feed for consistent mint prices
     AggregatorV3Interface internal priceFeed;
     
-    //mint fee can be updated by contract owner
+    //mint fee can be updated by contract owner (in wei)
     uint256 public mintFee;
-    
+
+     //price to mint in USD
+    uint constant usdPrice = 1;
+
     //mapping requestId to tokenId for getting IPFS hashes
     mapping(bytes32 => uint256) private _requestMap;
 
@@ -126,8 +129,8 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
     //attrId = assetId
     //attrValue = componentId
     function mintAvatar(address to, uint256[] memory attrId, uint256[] memory attrValue) public payable validateAttributeArrays(attrId, attrValue) {
-        //require and check payment
-        if(msg.value < mintFee)
+        //require and check payment, no fee if contract owner
+        if(msg.value < mintFee && _msgSender() != owner() )
           revert InsufficientPayment(mintFee);
 
         uint256 tokenId = _tokenIdCounter.current();
@@ -251,7 +254,7 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
             /*uint80 answeredInRound*/
         ) = priceFeed.latestRoundData();
         //calculates the new mint fee (of the amount of wei that equals $10 usd)
-        mintFee = (10*10**18)/(uint(price)*10**(18-priceFeed.decimals())); 
+        mintFee = (usdPrice*10**(18 + priceFeed.decimals()))/uint(price); 
     }
     
     //withdraw function for funds (TODO look into PaymentSplitter contract)
