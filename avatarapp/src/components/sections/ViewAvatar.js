@@ -33,7 +33,7 @@ import Avatar from '../ui/Avatar';
 export default function ViewAvatar() {
   let { tokenId } = useParams(); 
   const toast = useToast();
-  const {allNFTs} = useNfts();
+  const {allNFTs, getTokenData} = useNfts();
 
   const [fetchingToken, setFetchingToken] = useState(true);
   const [resetNft, setResetNft] = useState(true);
@@ -60,14 +60,14 @@ export default function ViewAvatar() {
   });
 
   const { data, error, fetch, isFetching } = useWeb3ExecuteFunction();
-  const { isAuthenticated, Moralis, isWeb3Enabled, user } = useMoralis();
+  const { isAuthenticated, isInitialized, user } = useMoralis();
 
   useEffect(() => {
     let setJ = true;
-    if(isWeb3Enabled) {
+    if(isInitialized) {
         if(nftData == null){
           (async () => {
-            const tJson =  await getTokenData();
+            const tJson =  await getTokenURIData();
             if(setJ){
               if(tJson != null){
                 setNftData(tJson);
@@ -80,7 +80,7 @@ export default function ViewAvatar() {
     return () =>{
       setJ = false;
     }
-  },[isAuthenticated, isWeb3Enabled])
+  },[isAuthenticated, isInitialized])
 
   useEffect(() => {
       if(nftData !== null){
@@ -118,32 +118,17 @@ export default function ViewAvatar() {
       }
   },[nftData]);
 
-  const getTokenData = async() => {
-    if(isWeb3Enabled){
-      let options = {
-          contractAddress: process.env.REACT_APP_CONTRACT_ADDRESS,
-          functionName: "tokenURI",
-          abi: everyDayAvatar.abi,
-          params: {
-            tokenId: tokenId,
-          },
-        };
-      
+  const getTokenURIData = async() => {
       try {
-        let tokenJson = await Moralis.executeFunction(options);
-      
+        let tokenJson = await getTokenData(tokenId);
         if(tokenJson){
-            tokenJson = Buffer.from(tokenJson.replace("data:application/json;base64,", ""), "base64").toString();
             if(tokenJson){
-                tokenJson = JSON.parse(tokenJson)
-                
                 return tokenJson;
             }
         }
       } catch (error) {
         return null;
       }
-    }
     return null;
   }
 
@@ -363,7 +348,7 @@ export default function ViewAvatar() {
       [F]:null,
       [C]:null
     })
-    const tJson = await getTokenData();
+    const tJson = await getTokenURIData();
     if(tJson != null){
       setNftData(tJson);
     }
