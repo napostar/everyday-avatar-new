@@ -1,6 +1,6 @@
 
 import React,{useState, useEffect, useContext} from 'react'
-import { useMoralis, useMoralisWeb3Api } from 'react-moralis';
+import { useMoralis } from 'react-moralis';
 import everyDayAvatar from "../contract/EverydayAvatar.json"
 
 const NftContext = React.createContext();
@@ -12,10 +12,17 @@ export function useNfts() {
 const NftsContext = ({children}) => {
   const [allNFTs, setAllNFTs] = useState([]);
 
-  const Web3Api = useMoralisWeb3Api();
-  const { isInitialized, chainId, isWeb3Enabled, Moralis } = useMoralis();
+  const { isInitialized, Moralis } = useMoralis();
   const [fetchingNfts, setFetchingNfts] = useState(true);
 
+  useEffect(() => {
+    if(window.ethereum){
+      console.log('found')
+    }else{
+      console.log('not found')
+
+    }
+  },[])
   useEffect(() => {
     let fetch = true;
     if(isInitialized){
@@ -30,7 +37,7 @@ const NftsContext = ({children}) => {
     return () => {
       fetch = false;
     }
-  },[isWeb3Enabled])
+  },[isInitialized])
 
   const fetchAllNfts = async () => {
     let nfts = await fetchNFTsForContract();
@@ -45,18 +52,19 @@ const NftsContext = ({children}) => {
     return nfts;
   }
 
+
   const getTokenData = async (tokenId) => {
-    if (isWeb3Enabled) {
       let options = {
-        contractAddress: process.env.REACT_APP_CONTRACT_ADDRESS,
-        functionName: "tokenURI",
+        chain: "mumbai",
+        address: process.env.REACT_APP_CONTRACT_ADDRESS,
+        function_name: "tokenURI",
         abi: everyDayAvatar.abi,
         params: {
           tokenId: tokenId,
         },
       };
 
-      let tokenJson = await Moralis.executeFunction(options);
+      let tokenJson = await Moralis.Web3API.native.runContractFunction(options);
 
       if (tokenJson) {
         tokenJson = Buffer.from(
@@ -68,7 +76,6 @@ const NftsContext = ({children}) => {
           return tokenJson;
         }
       }
-    }
     return null;
   };
 
@@ -81,17 +88,16 @@ const NftsContext = ({children}) => {
 
   const fetchNFTsForContract = async () => {
     const options = {
-      chain: chainId,
+      chain: 'mumbai',
       address: process.env.REACT_APP_CONTRACT_ADDRESS,
     };
-    const polygonNFTs = await Web3Api.token.getNFTOwners(options);
-    //console.log(polygonNFTs)
+    const polygonNFTs = await Moralis.Web3API.token.getNFTOwners(options);
     return polygonNFTs.result;
   };
 
   return (
     <NftContext.Provider value={{
-      allNFTs,fetchingNfts,refreshNfts
+      allNFTs,fetchingNfts,refreshNfts,getTokenData
       }}>
       {children}
     </NftContext.Provider>

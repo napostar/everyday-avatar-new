@@ -49,13 +49,13 @@ const Header = (props) => {
   const toggleMenu = () => setShow(!show);
   const {colorMode} = useColorMode();
   const Web3Api = useMoralisWeb3Api();
-  const {isAuthenticated, isInitialized, Moralis, user, authenticate, logout, isAuthenticating, web3, isWeb3Enabled, enableWeb3,chainId, authError} = useMoralis();
+  const {isAuthenticated, isInitialized, Moralis, user, authenticate, logout, isAuthenticating, web3, isWeb3Enabled,isWeb3EnableLoading, enableWeb3,chainId, authError} = useMoralis();
 
   useEffect(() => {
     if(!isWeb3Enabled){
-      (async()=>{
+       (async () => {
         await enableWeb3()
-      })()
+       })()
     }
   },[isWeb3Enabled]);
 
@@ -138,6 +138,22 @@ const Header = (props) => {
   },[isWeb3Enabled, isAuthenticated])
 
   const loginMetaMaskHandler = async () => {
+    if(isWeb3EnableLoading){
+      toast({
+        title: 'Please login to your metamask wallet.',
+        description: "",
+        status: 'info',
+        position: 'bottom-right',
+        duration: 9000,
+        isClosable: true,
+      })
+      return;
+    }else{
+      if(!isWeb3Enabled){
+        await enableWeb3();
+      }
+    }
+  
     if(!isAuthenticated){
       await authenticate({signingMessage:"SignIn To EveryDay Avatar"});
     }

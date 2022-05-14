@@ -22,7 +22,7 @@ const Mints = () => {
   const {allNFTs, fetchingNfts, refreshNfts} = useNfts()
   const Web3Api = useMoralisWeb3Api();
 
-  //const { isAuthenticated, isInitialized, chainId, isWeb3Enabled } = useMoralis();
+  const { isAuthenticated } = useMoralis();
   
   // useEffect(() => {
   //   let fetch = true;
@@ -73,9 +73,11 @@ const Mints = () => {
   return (
     <>
       <Text fontSize='2xl' mt="4">EverydayAvatar NFTs</Text>
-      <Button colorScheme='blue' size='xs' mt={2} onClick={refreshNfts} disabled={fetchingNfts}>
+      {isAuthenticated &&
+       <Button colorScheme='blue' size='xs' mt={2} onClick={refreshNfts} disabled={fetchingNfts}>
         Referesh
-      </Button>
+      </Button> }
+     
       {(fetchingNfts) ? 
           <div style={{padding: "100px"}}>
               <Spinner
