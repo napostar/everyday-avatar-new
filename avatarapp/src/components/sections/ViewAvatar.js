@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Stack,
   Image,
@@ -27,10 +27,15 @@ import everyDayAvatar from "../../contract/EverydayAvatar.json";
 import { useParams } from "react-router-dom";
 import avaAssets from "../../utils/avatarAssets";
 import AvatarBuilder from "../ui/AvatarBuilder";
+import { useNfts } from "../../context/NftsContext";
+import Avatar from '../ui/Avatar';
 
 export default function ViewAvatar() {
   let { tokenId } = useParams(); 
   const toast = useToast();
+  const {allNFTs} = useNfts();
+
+  const [fetchingToken, setFetchingToken] = useState(true);
   const [resetNft, setResetNft] = useState(true);
   const [nftData, setNftData] = useState(null);
   const [avatarData, setAvatarData] = useState([]);
@@ -55,11 +60,11 @@ export default function ViewAvatar() {
   });
 
   const { data, error, fetch, isFetching } = useWeb3ExecuteFunction();
-  const { isAuthenticated, Moralis, isWeb3Enabled } = useMoralis();
+  const { isAuthenticated, Moralis, isWeb3Enabled, user } = useMoralis();
 
   useEffect(() => {
     let setJ = true;
-    if(isAuthenticated && isWeb3Enabled) {
+    if(isWeb3Enabled) {
         if(nftData == null){
           (async () => {
             const tJson =  await getTokenData();
@@ -67,6 +72,7 @@ export default function ViewAvatar() {
               if(tJson != null){
                 setNftData(tJson);
               }
+              setFetchingToken(false);
             }
           })()
         }
@@ -113,9 +119,6 @@ export default function ViewAvatar() {
   },[nftData]);
 
   const getTokenData = async() => {
-    // await deactivateWeb3();
-    // await Moralis.enableWeb3();
-    
     if(isWeb3Enabled){
       let options = {
           contractAddress: process.env.REACT_APP_CONTRACT_ADDRESS,
@@ -126,14 +129,19 @@ export default function ViewAvatar() {
           },
         };
       
-      let tokenJson = await Moralis.executeFunction(options);
+      try {
+        let tokenJson = await Moralis.executeFunction(options);
       
-      if(tokenJson){
-          tokenJson = Buffer.from(tokenJson.replace("data:application/json;base64,", ""), "base64").toString();
-          if(tokenJson){
-              tokenJson = JSON.parse(tokenJson)
-              return tokenJson;
-          }
+        if(tokenJson){
+            tokenJson = Buffer.from(tokenJson.replace("data:application/json;base64,", ""), "base64").toString();
+            if(tokenJson){
+                tokenJson = JSON.parse(tokenJson)
+                
+                return tokenJson;
+            }
+        }
+      } catch (error) {
+        return null;
       }
     }
     return null;
@@ -156,7 +164,7 @@ export default function ViewAvatar() {
 
   useEffect(() => {
     if (error) {
-      let message = (typeof error.data.message != undefined) ? error.data.message: error.message
+      let message = (typeof error.data != "undefined") ? error.data.message: error.message
       toast({
         title: "Error",
         description: message,
@@ -182,6 +190,8 @@ export default function ViewAvatar() {
       genAvatar = false;
     }
   }, [newAvatar]);
+
+
 
   const getSrcObj = async (category) => {
     if (category !== null) {
@@ -345,6 +355,7 @@ export default function ViewAvatar() {
   };
 
   const resetNftHandler = async () => {
+    setFetchingToken(true);
     setNftData(null);
     setRequest({
       [BG]: null,
@@ -356,112 +367,128 @@ export default function ViewAvatar() {
     if(tJson != null){
       setNftData(tJson);
     }
+     setFetchingToken(false);
   }
 
+  
+  const showControls = useCallback(() => {
+    const nft = allNFTs.find((n) => n.token_id === tokenId);
+    return (isAuthenticated) && (nft?.owner_of) && (nft.owner_of.toLowerCase() === user.attributes.ethAddress.toLowerCase());
+  },[isAuthenticated,allNFTs, user])
 
   return (
     <Container maxW={"6xl"} py={12}>
       <SimpleGrid columns={{ base: 1, md: 2 }} spacing={10}>
-        <Stack spacing={4} w={"full"} maxW={"md"}>
-          <AvatarBuilder makeAvatar={makeAvatar} newAvatar={newAvatar}/>
-        </Stack>
-        <Stack>
-          {src !== null ? (
-            <Stack>
-                <Box w="350px">
-                  <Image id="your-avatar" alt={"Your Avatar"} src={src} />
-                </Box>
-                <Box >
-                    <Heading fontSize="xl" marginTop="2">
-                      <Link
-                        textDecoration="none"
-                        _hover={{ textDecoration: "none" }}
-                      >
-                        {(nftData?.name)?nftData?.name:'Name not found'}
-                      </Link>
-                    </Heading>
-                  
-                    <Text as="p" fontSize="sm" marginTop="2">
-                        {(nftData?.description)?nftData?.description:'Description not found'}
-                    </Text>
+        {(showControls()) ? 
+         ( <>
+         <Stack spacing={4} w={"full"} maxW={"md"}>
+            <AvatarBuilder makeAvatar={makeAvatar} newAvatar={newAvatar} />
+          </Stack>
+                  <Stack>
+                  {(!fetchingToken) ? (
+                    <Stack>
+                      {(nftData !== null)? 
+                         <>
+                         <Box w="350px">
+                            <Image id="your-avatar" alt={"Your Avatar"} src={src} />
+                          </Box>
+                          <Box >
+                              <Heading fontSize="xl" marginTop="2">
+                                <Link
+                                  textDecoration="none"
+                                  _hover={{ textDecoration: "none" }}
+                                >
+                                  {(nftData?.name)?nftData?.name:'Name not found'}
+                                </Link>
+                              </Heading>
+                            
+                              <Text as="p" fontSize="sm" marginTop="2">
+                                  {(nftData?.description)?nftData?.description:'Description not found'}
+                              </Text>
+          
+                              {(nftData?.attributes) && (
+                                <>
+                                  <Text mt={2} fontWeight={600}>Traits</Text>
+                                  <List >
+                                    {nftData.attributes.map((attr, idx) => (
+                                        <ListItem key={idx} fontSize="sm" padding="1">
+                                          {attr.trait_type} - 
+                                          <Badge variant='outline' colorScheme='blue'>{attr.value}</Badge></ListItem>
+                                    ))}
+                                  </List>
+                                </>
+                              )}
+                          </Box>
+                         </>
+                        :
+                        <Box><Text>Token Not Found</Text></Box>
+                      }
+                    </Stack>
+                  ) : (
+                    <div
+                      style={{
+                        padding: "200px",
+                      }}
+                    >
+                      <Spinner
+                        thickness="4px"
+                        speed="0.90s"
+                        emptyColor="gray.200"
+                        color="blue.500"
+                        size="xl"
+                      />
+                    </div>
+                  )}
+                  <Flex>
+                    <Box>
+                    <Button
+                    pt={8}
+                    mt={5}
+                    bg={colorMode === "dark" ? "customB.500" : "primary.500"}
+                    color={["white"]}
+                    _hover={{
+                      bg: ["primary.100", "primary.100", "primary.600", "primary.600"],
+                    }}
+                    borderRadius="8px"
+                    py="4"
+                    px="4"
+                    lineHeight="1"
+                    size="md"
+                    onClick={updateMintedAvatar}
+                    isLoading={isFetching}
+                  >
+                    Update Avatar
+                  </Button>
+                    </Box>
+        
+                    <Box pl={4}>
+                    <Button
+                    pt={8}
+                    mt={5}
+                    bg={colorMode === "dark" ? "customB.500" : "primary.500"}
+                    color={["white"]}
+                    _hover={{
+                      bg: ["primary.100", "primary.100", "primary.600", "primary.600"],
+                    }}
+                    borderRadius="8px"
+                    py="4"
+                    px="4"
+                    lineHeight="1"
+                    size="md"
+                    disabled={resetNft}
+                    onClick={resetNftHandler}
+                  >
+                    Reset
+                  </Button>
+                    </Box>
+                  </Flex>
+                </Stack>
+          </>)
+            : (
+                <Avatar src={src} nftData={nftData} fetchingToken={fetchingToken}/>
+            )
+        }
 
-                    {(nftData?.attributes) && (
-                      <>
-                        <Text mt={2} fontWeight={600}>Traits</Text>
-                        <List >
-                          {nftData.attributes.map((attr, idx) => (
-                              <ListItem key={idx} fontSize="sm" padding="1">
-                                {attr.trait_type} - 
-                                <Badge variant='outline' colorScheme='blue'>{attr.value}</Badge></ListItem>
-                          ))}
-                        </List>
-                      </>
-                    )}
-                </Box>
-            </Stack>
-
-            
-          ) : (
-            <div
-              style={{
-                padding: "200px",
-              }}
-            >
-              <Spinner
-                thickness="4px"
-                speed="0.90s"
-                emptyColor="gray.200"
-                color="blue.500"
-                size="xl"
-              />
-            </div>
-          )}
-
-          <Flex>
-            <Box>
-            <Button
-            pt={8}
-            mt={5}
-            bg={colorMode === "dark" ? "customB.500" : "primary.500"}
-            color={["white"]}
-            _hover={{
-              bg: ["primary.100", "primary.100", "primary.600", "primary.600"],
-            }}
-            borderRadius="8px"
-            py="4"
-            px="4"
-            lineHeight="1"
-            size="md"
-            onClick={updateMintedAvatar}
-            isLoading={isFetching}
-          >
-            Update Avatar
-          </Button>
-            </Box>
-
-            <Box pl={4}>
-            <Button
-            pt={8}
-            mt={5}
-            bg={colorMode === "dark" ? "customB.500" : "primary.500"}
-            color={["white"]}
-            _hover={{
-              bg: ["primary.100", "primary.100", "primary.600", "primary.600"],
-            }}
-            borderRadius="8px"
-            py="4"
-            px="4"
-            lineHeight="1"
-            size="md"
-            disabled={resetNft}
-            onClick={resetNftHandler}
-          >
-            Reset
-          </Button>
-            </Box>
-          </Flex>
-
-        </Stack>
       </SimpleGrid>
     </Container>
   );

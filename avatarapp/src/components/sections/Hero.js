@@ -9,11 +9,9 @@ import {
   Heading,
   Stack,
   Text,
-  useColorMode,
-  useToast
+  useColorMode
 } from "@chakra-ui/react";
 import welcomeLogo from '../../welcomeLogo.png';
-import { useMoralis } from "react-moralis";
 export default function Hero({
   title,
   subtitle,
@@ -22,24 +20,11 @@ export default function Hero({
   ctaText,
   ...rest
 }) {
-  const toast = useToast()
   const {colorMode} = useColorMode();
-  const {isAuthenticated} = useMoralis();
   const navigate = useNavigate();
 
 
   const mintNftHandler = () => {
-    if(!isAuthenticated){
-      toast({
-        description: 'Please connect wallet',
-        status: 'error',
-        position: 'bottom-right',
-        duration: 9000,
-        isClosable: true,
-      })
-      return;
-    }
-    console.log('Going to Mint..')
     navigate("/mint-avatar", { replace: true });
   }
 

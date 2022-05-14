@@ -7,7 +7,7 @@ import Logo from "../ui/Logo";
 import { useMoralis, useMoralisWeb3Api } from "react-moralis";
 import { CHAIN_IDS_TO_NAMES } from "../../utils/supportedChains";
 
-const MenuItem = ({ children, isLast, to = "/", ...rest }) => {
+const MenuItem = ({ children, isLast, to = "#", ...rest }) => {
   return (
     <Text
       mb={{ base: isLast ? 0 : 8, sm: 0 }}

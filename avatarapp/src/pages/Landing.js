@@ -4,11 +4,9 @@ import Hero from "../components/sections/Hero";
 import LandingLayout from "../components/layouts/LandingLayout";
 import Developers from "../components/sections/Developers";
 import Mints from "../components/sections/Mints";
-import { useMoralis } from "react-moralis";
 
 
 export default function Landing() {
-  const {isAuthenticated} = useMoralis();
   return (
     <LandingLayout>
       <Hero
@@ -17,7 +15,7 @@ export default function Landing() {
         ctaText="MINT NOW"
         ctaLink="/mint-nft"
       />
-      {isAuthenticated && <Mints/>}
+      <Mints/>
       <Developers/>
     </LandingLayout>
   );
