@@ -78,7 +78,7 @@ export default function MintAvatar() {
 
   useEffect(() => {
     if (error) {
-      let message = (typeof error.data.message != undefined) ? error.data.message: error.message
+      let message = (typeof error.data != 'undefined') ? error.data.message: error.message
       toast({
         title: "Error",
         description: message,
@@ -208,6 +208,13 @@ export default function MintAvatar() {
       newAvatar.clothes.assetId,
     ];
 
+    let opt = {
+      contractAddress: process.env.REACT_APP_CONTRACT_ADDRESS,
+      functionName: "mintFee",
+      abi: everyDayAvatar.abi,
+    };
+    const mintFee = await Moralis.executeFunction(opt);
+
     let options = {
       contractAddress: process.env.REACT_APP_CONTRACT_ADDRESS,
       functionName: "mintAvatar",
@@ -217,7 +224,7 @@ export default function MintAvatar() {
         attrId: [BG, H, F, C],
         attrValue: assets,
       },
-      msgValue: Moralis.Units.ETH(Moralis.Units.FromWei("13")),
+      msgValue: Moralis.Units.ETH(Moralis.Units.FromWei(mintFee)),
     };
 
     const mintTxn = await fetch({ params: options });
