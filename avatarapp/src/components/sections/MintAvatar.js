@@ -20,9 +20,11 @@ import everyDayAvatar from "../../contract/EverydayAvatar.json";
 import Mints from "./Mints";
 import avaAssets from "../../utils/avatarAssets";
 import AvatarBuilder from "../ui/AvatarBuilder";
+import { useNfts } from "../../context/NftsContext";
 
 export default function MintAvatar() {
   const toast = useToast();
+  const {allNFTs, fetchingNfts, refreshNfts} = useNfts()
 
   const [avatarData, setAvatarData] = useState([]);
 
@@ -284,7 +286,7 @@ export default function MintAvatar() {
       </SimpleGrid>
 
       <Divider mt="4"/>
-      <Mints/>
+      <Mints allNFTs={allNFTs} fetchingNfts={fetchingNfts} refreshNfts={refreshNfts}/>
 
     </Container>
   );

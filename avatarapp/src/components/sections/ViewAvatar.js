@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Stack,
   Image,
@@ -29,13 +29,21 @@ import avaAssets from "../../utils/avatarAssets";
 import AvatarBuilder from "../ui/AvatarBuilder";
 import { useNfts } from "../../context/NftsContext";
 import Avatar from '../ui/Avatar';
+import Mints from "../../components/sections/Mints";
+
 
 export default function ViewAvatar() {
   let { tokenId } = useParams(); 
   const toast = useToast();
   const {allNFTs, getTokenData} = useNfts();
 
+  const didMountRef = useRef(false);
+
   const [fetchingToken, setFetchingToken] = useState(true);
+
+  const [ownedNFTs, setOwnedNFTs] = useState([]);
+  const [fetchingOwnedNfts, setFetchingOwnedNfts] = useState(true);
+
   const [resetNft, setResetNft] = useState(true);
   const [nftData, setNftData] = useState(null);
   const [avatarData, setAvatarData] = useState([]);
@@ -60,12 +68,30 @@ export default function ViewAvatar() {
   });
 
   const { data, error, fetch, isFetching } = useWeb3ExecuteFunction();
-  const { isAuthenticated, isInitialized, user } = useMoralis();
+  const { isAuthenticated, isInitialized, user, Moralis } = useMoralis();
+
+
+
+  useEffect(() => {
+    let fetch = true;
+    if(isInitialized && isAuthenticated){
+      (async () => {
+        const nfts = await fetchOwnedContracts();
+        if(fetch){
+          setOwnedNFTs(nfts);
+          setFetchingOwnedNfts(false);
+        }
+      })();
+    }
+    return () => {
+      fetch = false;
+    }
+  },[isInitialized, isAuthenticated])
 
   useEffect(() => {
     let setJ = true;
     if(isInitialized) {
-        if(nftData == null){
+        //if(didMountRef.current){
           (async () => {
             const tJson =  await getTokenURIData();
             if(setJ){
@@ -75,15 +101,16 @@ export default function ViewAvatar() {
               setFetchingToken(false);
             }
           })()
-        }
+        //}
     }
+    
     return () =>{
       setJ = false;
     }
-  },[isAuthenticated, isInitialized])
+  },[isAuthenticated, isInitialized, tokenId, didMountRef.current])
 
   useEffect(() => {
-      if(nftData !== null){
+      if(didMountRef.current){
         let bgAttr = nftData.attributes.find(n => n.trait_type === 'Background');
         let bgAsset = BACKGROUNDS.find(a => a.name === bgAttr.value)
 
@@ -112,11 +139,12 @@ export default function ViewAvatar() {
         })
         }
       }
-
+      didMountRef.current = true;
+      
       return () => {
         setResetNft(true);
       }
-  },[nftData]);
+  },[nftData, tokenId]);
 
   const getTokenURIData = async() => {
       try {
@@ -339,7 +367,42 @@ export default function ViewAvatar() {
     }
   };
 
+  const fetchOwnedContracts = async() => {
+    try {
+      const options = {
+        chain: "mumbai",
+        address: user.attributes.ethAddress,
+        token_address: process.env.REACT_APP_CONTRACT_ADDRESS,
+      };
+      const polygonNFTs = await Moralis.Web3API.account.getNFTsForContract(options);
+      const nfts = polygonNFTs.result;
+      if(nfts.length){
+        for(let n in nfts) {
+          if(nfts[n]){
+            const token_uri = await getTokenData(nfts[n].token_id);
+            if(token_uri !== null){
+              nfts[n].token_uri = token_uri;
+            }
+          }
+        }
+        return nfts;
+      }
+      return [];
+    } catch (error) {
+      return [];
+    }
+  }
+
+  const refreshOwnedNfts = async () => {
+    setFetchingOwnedNfts(true);
+    const nfts = await fetchOwnedContracts();
+    setOwnedNFTs(nfts);
+    setFetchingOwnedNfts(false);
+  }
+
+
   const resetNftHandler = async () => {
+    didMountRef.current = false;
     setFetchingToken(true);
     setNftData(null);
     setRequest({
@@ -359,7 +422,7 @@ export default function ViewAvatar() {
   const showControls = useCallback(() => {
     const nft = allNFTs.find((n) => n.token_id === tokenId);
     return (isAuthenticated) && (nft?.owner_of) && (nft.owner_of.toLowerCase() === user.attributes.ethAddress.toLowerCase());
-  },[isAuthenticated,allNFTs, user])
+  },[isAuthenticated,allNFTs, user, tokenId])
 
   return (
     <Container maxW={"6xl"} py={12}>
@@ -473,8 +536,10 @@ export default function ViewAvatar() {
                 <Avatar src={src} nftData={nftData} fetchingToken={fetchingToken}/>
             )
         }
-
+     
       </SimpleGrid>
+    
+      {isAuthenticated && <Mints allNFTs={ownedNFTs} fetchingNfts={fetchingOwnedNfts} refreshNfts={refreshOwnedNfts} title="Owned NFTs"/>}
     </Container>
   );
 }
