@@ -4,9 +4,11 @@ import Hero from "../components/sections/Hero";
 import LandingLayout from "../components/layouts/LandingLayout";
 import Developers from "../components/sections/Developers";
 import Mints from "../components/sections/Mints";
+import { useNfts } from "../context/NftsContext";
 
 
 export default function Landing() {
+  const {allNFTs, fetchingNfts, refreshNfts} = useNfts()
   return (
     <LandingLayout>
       <Hero
@@ -15,7 +17,7 @@ export default function Landing() {
         ctaText="MINT NOW"
         ctaLink="/mint-nft"
       />
-      <Mints/>
+      <Mints allNFTs={allNFTs} fetchingNfts={fetchingNfts} refreshNfts={refreshNfts}/>
       <Developers/>
     </LandingLayout>
   );

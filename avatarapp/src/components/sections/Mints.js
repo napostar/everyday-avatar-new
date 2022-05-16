@@ -16,10 +16,11 @@ import {
 } from "@chakra-ui/react";
 import { useMoralis, useMoralisWeb3Api } from "react-moralis";
 import { Link as RouterLink } from "react-router-dom";
-import { useNfts } from "../../context/NftsContext";
-const Mints = () => {
+
+const Mints = ({allNFTs, fetchingNfts, refreshNfts, title="EverydayAvatar NFTs"}) => {
+
   const toast = useToast()
-  const {allNFTs, fetchingNfts, refreshNfts} = useNfts()
+  
   const Web3Api = useMoralisWeb3Api();
 
   const { isAuthenticated } = useMoralis();
@@ -72,7 +73,7 @@ const Mints = () => {
   
   return (
     <>
-      <Text fontSize='2xl' mt="4">EverydayAvatar NFTs</Text>
+      <Text fontSize='2xl' mt="4">{title}</Text>
       {isAuthenticated &&
        <Button colorScheme='blue' size='xs' mt={2} onClick={refreshNfts} disabled={fetchingNfts}>
         Referesh

@@ -15,14 +15,7 @@ const NftsContext = ({children}) => {
   const { isInitialized, Moralis } = useMoralis();
   const [fetchingNfts, setFetchingNfts] = useState(true);
 
-  useEffect(() => {
-    if(window.ethereum){
-      console.log('found')
-    }else{
-      console.log('not found')
 
-    }
-  },[])
   useEffect(() => {
     let fetch = true;
     if(isInitialized){
@@ -43,15 +36,34 @@ const NftsContext = ({children}) => {
     let nfts = await fetchNFTsForContract();
     for(let n in nfts) {
       if(nfts[n]){
-        const token_uri = await getTokenData(nfts[n].token_id);
-        if(token_uri !== null){
-          nfts[n].token_uri = token_uri;
+        // const token_uri = await getTokenData(nfts[n].token_id);
+        // if(token_uri !== null){
+        //   nfts[n].token_uri = token_uri;
+        // }
+        if(nfts[n].token_uri !== null){
+          let json = parseToken(nfts[n].token_uri);
+          if(json.token_uri !== null){
+            nfts[n].token_uri = json;
+          }
         }
       }
     }
     return nfts;
   }
 
+  const parseToken = (token_uri) => {
+    if(token_uri !== null){
+      let tokenJson = Buffer.from(
+        token_uri.replace("data:application/json;base64,", ""),
+        "base64"
+      ).toString();
+      if (tokenJson) {
+        tokenJson = JSON.parse(tokenJson);
+        return tokenJson;
+      }
+    }
+    return null
+  }
 
   const getTokenData = async (tokenId) => {
       let options = {
