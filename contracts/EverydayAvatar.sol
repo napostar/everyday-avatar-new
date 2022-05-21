@@ -223,11 +223,14 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
         string[] memory tokenNames = compData.componentNames(values);
 
         for(uint i=0 ; i < attr.length ; i++) {
-          output = abi.encodePacked(output, '{"trait_type":"', symbol(attr[i]), '","value":"',
-          tokenNames[i],
-          '"}');
-          if(i < attr.length-1) {
-            output = abi.encodePacked(output, ',');
+          //ignore the zero attribute
+          if(attr[i] != 0) {
+            output = abi.encodePacked(output, '{"trait_type":"', symbol(attr[i]), '","value":"',
+            tokenNames[i],
+            '"}');
+            if(i < attr.length-1) {
+              output = abi.encodePacked(output, ',');
+            }
           }
         }
       
