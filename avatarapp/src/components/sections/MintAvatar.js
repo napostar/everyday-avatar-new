@@ -99,6 +99,9 @@ export default function MintAvatar() {
       if(genAvatar){
         if(mergeArray.length){
           setAvatarData([...mergeArray]);
+        }else{
+          setAvatarData([]);
+          setSrc('none');
         }
       }
     })()
@@ -109,26 +112,30 @@ export default function MintAvatar() {
 
   const getSrcObj = async (category) => {
     if (category !== null) {
-      const base64Strng = await imageToBase64(
-        require(`../../avatarComponents/${category.assetId}.png`).default
-      );
-      const categoryIdx = avatarData.findIndex(
-        (a) => a.categoryId === category.categoryId
-      );
-      if (categoryIdx !== -1) {
-        let tmp = [...avatarData];
-        let updateAvatar = { ...tmp[categoryIdx] };
-        updateAvatar.src = `data:image/png;base64,${base64Strng}`;
-        updateAvatar.assetId = category.assetId;
-        return updateAvatar;
-      } else {
-        return {
-          src: `data:image/png;base64,${base64Strng}`,
-          x: 0,
-          y: 0,
-          categoryId: category.categoryId,
-          assetId: category.assetId,
-        };
+      if(category.assetId !== 'none'){
+        const base64Strng = await imageToBase64(
+          require(`../../avatarComponents/${category.assetId}.png`).default
+        );
+        const categoryIdx = avatarData.findIndex(
+          (a) => a.categoryId === category.categoryId
+        );
+        if (categoryIdx !== -1) {
+          let tmp = [...avatarData];
+          let updateAvatar = { ...tmp[categoryIdx] };
+          updateAvatar.src = `data:image/png;base64,${base64Strng}`;
+          updateAvatar.assetId = category.assetId;
+          return updateAvatar;
+        } else {
+          return {
+            src: `data:image/png;base64,${base64Strng}`,
+            x: 0,
+            y: 0,
+            categoryId: category.categoryId,
+            assetId: category.assetId,
+          };
+        }
+      }else{
+        return null;
       }
     }
   };
@@ -143,24 +150,32 @@ export default function MintAvatar() {
 
     if (bg !== null) {
       const bgSrc = await getSrcObj(bg);
-      mergeArray.push(bgSrc);
+      if(bgSrc !== null){
+        mergeArray.push(bgSrc);
+      }
     }
 
     if (head !== null) {
       const headSrc = await getSrcObj(head);
-      mergeArray.push(headSrc);
+      if(headSrc !== null){
+        mergeArray.push(headSrc);
+      }
     }
 
     if (face !== null) {
       const faceSrc = await getSrcObj(face);
-      mergeArray.push(faceSrc);
+      if(faceSrc !== null){
+        mergeArray.push(faceSrc);
+      }
     }
 
     if (clothes !== null) {
       const clothesSrc = await getSrcObj(clothes);
-      mergeArray.push(clothesSrc);
+      if(clothesSrc !== null){
+        mergeArray.push(clothesSrc);
+      }
     }
-
+    
     return mergeArray;
   };
 
@@ -203,6 +218,7 @@ export default function MintAvatar() {
       return;
     }
 
+    const category = [BG, H, F, C];
     const assets = [
       newAvatar.bg.assetId,
       newAvatar.head.assetId,
@@ -210,29 +226,52 @@ export default function MintAvatar() {
       newAvatar.clothes.assetId,
     ];
 
-    let opt = {
-      contractAddress: process.env.REACT_APP_CONTRACT_ADDRESS,
-      functionName: "mintFee",
-      abi: everyDayAvatar.abi,
-    };
-    const mintFee = await Moralis.executeFunction(opt);
 
-    let options = {
-      contractAddress: process.env.REACT_APP_CONTRACT_ADDRESS,
-      functionName: "mintAvatar",
-      abi: everyDayAvatar.abi,
-      params: {
-        to: user.attributes.ethAddress,
-        attrId: [BG, H, F, C],
-        attrValue: assets,
-      },
-      msgValue: Moralis.Units.ETH(Moralis.Units.FromWei(mintFee)),
-    };
+    let paramAsset = [];
+    let paramCategory = [];
+    category.map((c, idx) =>{
+       if(assets[idx] !== 'none'){
+        paramCategory.push(c);
+        paramAsset.push(assets[idx]);
+       }
+    })
 
-    const mintTxn = await fetch({ params: options });
-    if (mintTxn) {
-      await mintTxn.wait(1);
+    if(paramCategory.length && paramAsset.length){
+      let opt = {
+        contractAddress: process.env.REACT_APP_CONTRACT_ADDRESS,
+        functionName: "mintFee",
+        abi: everyDayAvatar.abi,
+      };
+      const mintFee = await Moralis.executeFunction(opt);
+  
+      let options = {
+        contractAddress: process.env.REACT_APP_CONTRACT_ADDRESS,
+        functionName: "mintAvatar",
+        abi: everyDayAvatar.abi,
+        params: {
+          to: user.attributes.ethAddress,
+          attrId: paramCategory,
+          attrValue: paramAsset,
+        },
+        msgValue: Moralis.Units.ETH(Moralis.Units.FromWei(mintFee)),
+      };
+  
+      const mintTxn = await fetch({ params: options });
+      if (mintTxn) {
+        await mintTxn.wait(1);
+      }
+    }else{
+      toast({
+        title: "Info",
+        description: "Please select avatar accessory",
+        status: "info",
+        position: "bottom-right",
+        duration: 9000,
+        isClosable: true,
+      });
+      return;
     }
+
   };
 
   function addLeadingZeros(num, totalLength) {
@@ -243,25 +282,31 @@ export default function MintAvatar() {
     <Container maxW={"6xl"} py={12}>
       <SimpleGrid columns={{ base: 1, md: 2 }} spacing={10}>
         <Stack spacing={4} w={"full"} maxW={"md"}>
-          <AvatarBuilder makeAvatar={makeAvatar} newAvatar={newAvatar}/>
+          <AvatarBuilder makeAvatar={makeAvatar} newAvatar={newAvatar} addNone={true}/>
         </Stack>
         <Stack>
           {src !== null ? (
             <Image id="your-avatar" alt={"Your Avatar"} src={src} />
           ) : (
-            <div
-              style={{
-                padding: "200px",
-              }}
-            >
-              <Spinner
-                thickness="4px"
-                speed="0.90s"
-                emptyColor="gray.200"
-                color="blue.500"
-                size="xl"
-              />
-            </div>
+            <>
+              {src === 'none' ? (
+                <></>
+              ):(
+                <div
+                style={{
+                    padding: "200px",
+                  }}
+                >
+                  <Spinner
+                    thickness="4px"
+                    speed="0.90s"
+                    emptyColor="gray.200"
+                    color="blue.500"
+                    size="xl"
+                  />
+                </div>
+              )}
+            </>
           )}
 
           <Button

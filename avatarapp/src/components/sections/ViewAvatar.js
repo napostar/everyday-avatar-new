@@ -112,16 +112,28 @@ export default function ViewAvatar() {
   useEffect(() => {
       if(didMountRef.current){
         let bgAttr = nftData.attributes.find(n => n.trait_type === 'Background');
-        let bgAsset = BACKGROUNDS.find(a => a.name === bgAttr.value)
+        let bgAsset = null;
+        if(typeof bgAttr !== 'undefined'){
+          bgAsset = BACKGROUNDS.find(a => a.name === bgAttr.value)
+        }
 
         let headAttr = nftData.attributes.find(n => n.trait_type === 'Head');
-        let headAsset = HEAD.find(a => a.name === headAttr.value)
+        let headAsset = null;
+        if(typeof headAttr !== 'undefined'){
+          headAsset = HEAD.find(a => a.name === headAttr.value)
+        }
 
         let faceAttr = nftData.attributes.find(n => n.trait_type === 'Face');
-        let faceAsset = FACE.find(a => a.name === faceAttr.value)
+        let faceAsset = null;
+        if(typeof faceAttr !== 'undefined'){
+          faceAsset = FACE.find(a => a.name === faceAttr.value)
+        }
 
         let clothesAttr = nftData.attributes.find(n => n.trait_type === 'Clothes');
-        let clothesAsset = CLOTHES.find(a => a.name === clothesAttr.value)
+        let clothesAsset = null;
+        if(typeof clothesAttr !== 'undefined'){
+          clothesAsset = CLOTHES.find(a => a.name === clothesAttr.value)
+        }
         
         setNewAvatar({
             bg: bgAsset,
@@ -136,7 +148,14 @@ export default function ViewAvatar() {
             head: headAsset,
             face: faceAsset,
             clothes: clothesAsset
-        })
+          })
+
+          // setRequest({
+          //   [BG]: (bgAsset)?bgAsset.assetId:null,
+          //   [H]: (headAsset)?headAsset.assetId:null,
+          //   [F]:(faceAsset)?faceAsset.assetId:null,
+          //   [C]:(clothesAsset)?clothesAsset.assetId:null
+          // })
         }
       }
       didMountRef.current = true;
@@ -196,6 +215,8 @@ export default function ViewAvatar() {
       if(genAvatar){
         if(mergeArray.length){
           setAvatarData([...mergeArray]);
+        }else{
+          await resetNftHandler();
         }
       }
     })()
@@ -208,26 +229,30 @@ export default function ViewAvatar() {
 
   const getSrcObj = async (category) => {
     if (category !== null) {
-      const base64Strng = await imageToBase64(
-        require(`../../avatarComponents/${category.assetId}.png`).default
-      );
-      const categoryIdx = avatarData.findIndex(
-        (a) => a.categoryId === category.categoryId
-      );
-      if (categoryIdx !== -1) {
-        let tmp = [...avatarData];
-        let updateAvatar = { ...tmp[categoryIdx] };
-        updateAvatar.src = `data:image/png;base64,${base64Strng}`;
-        updateAvatar.assetId = category.assetId;
-        return updateAvatar;
-      } else {
-        return {
-          src: `data:image/png;base64,${base64Strng}`,
-          x: 0,
-          y: 0,
-          categoryId: category.categoryId,
-          assetId: category.assetId,
-        };
+      if(category.assetId !== 'none'){
+        const base64Strng = await imageToBase64(
+          require(`../../avatarComponents/${category.assetId}.png`).default
+        );
+        const categoryIdx = avatarData.findIndex(
+          (a) => a.categoryId === category.categoryId
+        );
+        if (categoryIdx !== -1) {
+          let tmp = [...avatarData];
+          let updateAvatar = { ...tmp[categoryIdx] };
+          updateAvatar.src = `data:image/png;base64,${base64Strng}`;
+          updateAvatar.assetId = category.assetId;
+          return updateAvatar;
+        } else {
+          return {
+            src: `data:image/png;base64,${base64Strng}`,
+            x: 0,
+            y: 0,
+            categoryId: category.categoryId,
+            assetId: category.assetId,
+          };
+        }
+      }else{
+        return null;
       }
     }
   };
@@ -242,24 +267,32 @@ export default function ViewAvatar() {
 
     if (bg !== null) {
       const bgSrc = await getSrcObj(bg);
-      mergeArray.push(bgSrc);
+      if(bgSrc !== null){
+        mergeArray.push(bgSrc);
+      }
     }
 
     if (head !== null) {
       const headSrc = await getSrcObj(head);
-      mergeArray.push(headSrc);
+      if(headSrc !== null){
+        mergeArray.push(headSrc);
+      }
     }
 
     if (face !== null) {
       const faceSrc = await getSrcObj(face);
-      mergeArray.push(faceSrc);
+      if(faceSrc !== null){
+        mergeArray.push(faceSrc);
+      }
     }
 
     if (clothes !== null) {
       const clothesSrc = await getSrcObj(clothes);
-      mergeArray.push(clothesSrc);
+      if(clothesSrc !== null){
+        mergeArray.push(clothesSrc);
+      }
     }
-
+    
     return mergeArray;
   };
 
@@ -295,7 +328,7 @@ export default function ViewAvatar() {
 
     if(oldAvatar[category] !== null){
       let v = null
-      if(oldAvatar[category].assetId !== asset.assetId){
+      if((asset.assetId !== 'none')&&(oldAvatar[category].assetId !== asset.assetId)){
         v = asset.assetId;
       }
       setRequest(prevState => {
@@ -341,7 +374,7 @@ export default function ViewAvatar() {
     }
     
     Object.entries(request)
-      .filter(([, value]) => value !== null)
+      .filter(([, value]) => ((value !== null)))
       .forEach(([key, value]) => {
         categories.push(parseInt(key))
         assets.push(parseInt(value))
