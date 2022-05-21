@@ -59,7 +59,7 @@ export default function ViewAvatar() {
   const [src, setSrc] = useState(null);
   const { colorMode } = useColorMode();
 
-  const {BG,H,F,C, BACKGROUNDS, HEAD,FACE,CLOTHES} = avaAssets();
+  const {BG,H,F,C, BACKGROUNDS, HEAD,FACE,CLOTHES,compoMapping} = avaAssets();
   const [request, setRequest] = useState({
     [BG]: null,
     [H]: null,
@@ -111,29 +111,13 @@ export default function ViewAvatar() {
 
   useEffect(() => {
       if(didMountRef.current){
-        let bgAttr = nftData.attributes.find(n => n.trait_type === 'Background');
-        let bgAsset = null;
-        if(typeof bgAttr !== 'undefined'){
-          bgAsset = BACKGROUNDS.find(a => a.name === bgAttr.value)
-        }
 
-        let headAttr = nftData.attributes.find(n => n.trait_type === 'Head');
-        let headAsset = null;
-        if(typeof headAttr !== 'undefined'){
-          headAsset = HEAD.find(a => a.name === headAttr.value)
-        }
+        const bgAsset = getAssetTraitData(BG,BACKGROUNDS,'Background');
+        const headAsset = getAssetTraitData(H,HEAD,'Head');
+        const faceAsset = getAssetTraitData(F,FACE,'Face');
+        const clothesAsset = getAssetTraitData(C,CLOTHES,'Clothes');
 
-        let faceAttr = nftData.attributes.find(n => n.trait_type === 'Face');
-        let faceAsset = null;
-        if(typeof faceAttr !== 'undefined'){
-          faceAsset = FACE.find(a => a.name === faceAttr.value)
-        }
 
-        let clothesAttr = nftData.attributes.find(n => n.trait_type === 'Clothes');
-        let clothesAsset = null;
-        if(typeof clothesAttr !== 'undefined'){
-          clothesAsset = CLOTHES.find(a => a.name === clothesAttr.value)
-        }
         
         setNewAvatar({
             bg: bgAsset,
@@ -165,11 +149,24 @@ export default function ViewAvatar() {
       }
   },[nftData, tokenId]);
 
+  const getAssetTraitData = (category, components, trait) => {
+    let attr = nftData.attributes.find(n => n.trait_type === trait);
+    let asset = {
+      assetId:'none',
+      category: category,
+      name: 'None'
+    };
+    if(typeof attr !== 'undefined'){
+      asset = components.find(a => a.name === attr.value)
+    }
+    return asset
+  }
+
   const getTokenURIData = async() => {
       try {
         let tokenJson = await getTokenData(tokenId);
         if(tokenJson){
-            if(tokenJson){
+            if(tokenJson){                
                 return tokenJson;
             }
         }
@@ -326,18 +323,21 @@ export default function ViewAvatar() {
       setNftData(tokenTemp);
     }
 
+    let v = null
     if(oldAvatar[category] !== null){
-      let v = null
       if((asset.assetId !== 'none')&&(oldAvatar[category].assetId !== asset.assetId)){
         v = asset.assetId;
       }
-      setRequest(prevState => {
-        return {
-          ...prevState,
-          [oldAvatar[category].categoryId]: v
-        }
-      })
     }
+    if(asset.assetId === 'none'){
+      v = 0;
+    }
+    setRequest(prevState => {
+      return {
+        ...prevState,
+        [compoMapping[category]]: v
+      }
+    })
 
     if(resetNft){
       setResetNft(false);
@@ -463,7 +463,7 @@ export default function ViewAvatar() {
         {(showControls()) ? 
          ( <>
          <Stack spacing={4} w={"full"} maxW={"md"}>
-            <AvatarBuilder makeAvatar={makeAvatar} newAvatar={newAvatar} />
+            <AvatarBuilder makeAvatar={makeAvatar} newAvatar={newAvatar} addNone={true}/>
           </Stack>
                   <Stack>
                   {(!fetchingToken) ? (

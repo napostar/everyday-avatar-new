@@ -12,7 +12,7 @@ export default function Landing() {
   return (
     <LandingLayout>
       <Hero
-        title="Everyday Avatars"
+        title="EVERYDAY AVATAR"
         subtitle="are a collection of profile picture NFTs that are completely customizable"
         ctaText="MINT NOW"
         ctaLink="/mint-nft"

@@ -11,7 +11,7 @@ import {
   Text,
   useColorMode
 } from "@chakra-ui/react";
-import welcomeLogo from '../../welcomeLogo.png';
+import welcomeLogo from '../../everydaypreview.png';
 export default function Hero({
   title,
   subtitle,
@@ -107,7 +107,7 @@ Hero.propTypes = {
 };
 
 Hero.defaultProps = {
-  title: "EveryDay Avatar",
+  title: "Everyday Avatar",
   subtitle:
     "are a collection of profile picture NFTs that are completely customizable",
   image: welcomeLogo,
