@@ -3,7 +3,7 @@ import React from "react";
 import avaAssets from "../../utils/avatarAssets";
 import AvatarAssets from "./AvatarAssets";
 
-const AvatarBuilder = ({newAvatar, makeAvatar}) => {
+const AvatarBuilder = ({newAvatar, makeAvatar, addNone}) => {
   const {BACKGROUNDS, HEAD,FACE,CLOTHES} = avaAssets();
   return (
     <>
@@ -13,6 +13,7 @@ const AvatarBuilder = ({newAvatar, makeAvatar}) => {
         makeAvatarHandler={makeAvatar}
         category="bg"
         selectedAsset={newAvatar.bg}
+        addNone={addNone}
       />
 
       <Text fontSize="2xl">Head Accessories</Text>
@@ -21,6 +22,7 @@ const AvatarBuilder = ({newAvatar, makeAvatar}) => {
         makeAvatarHandler={makeAvatar}
         category="head"
         selectedAsset={newAvatar.head}
+        addNone={addNone}
       />
 
       <Text fontSize="2xl">Face Accessories</Text>
@@ -29,6 +31,7 @@ const AvatarBuilder = ({newAvatar, makeAvatar}) => {
         makeAvatarHandler={makeAvatar}
         category="face"
         selectedAsset={newAvatar.face}
+        addNone={addNone}
       />
 
       <Text fontSize="2xl">Clothes</Text>
@@ -37,6 +40,7 @@ const AvatarBuilder = ({newAvatar, makeAvatar}) => {
         makeAvatarHandler={makeAvatar}
         category="clothes"
         selectedAsset={newAvatar.clothes}
+        addNone={addNone}
       />
     </>
   );
