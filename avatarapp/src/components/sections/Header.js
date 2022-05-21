@@ -155,7 +155,7 @@ const Header = (props) => {
     }
   
     if(!isAuthenticated){
-      await authenticate({signingMessage:"SignIn To EveryDay Avatar"});
+      await authenticate({signingMessage:"SignIn To Everyday Avatar"});
     }
   }
 

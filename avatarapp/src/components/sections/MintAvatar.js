@@ -258,7 +258,7 @@ export default function MintAvatar() {
   
       const mintTxn = await fetch({ params: options });
       if (mintTxn) {
-        await mintTxn.wait(1);
+        await mintTxn.wait(2);
       }
     }else{
       toast({
