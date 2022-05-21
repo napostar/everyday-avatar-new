@@ -118,8 +118,9 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
       }
 
       //require values are the correct type for their attribute
+      //zero is valid for all attributeIds (interpreted as a remove)
       for(uint i=0; i < attrId.length ; i++){
-        if(compData.componentAttribute(attrValue[i]) != attrId[i])
+        if((attrValue[i] != 0) && (compData.componentAttribute(attrValue[i]) != attrId[i]))
           revert InvalidAttributeValue(attrId[i], attrValue[i]);
       }
       _;
@@ -148,16 +149,27 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
         revert UnauthorizedOperator();
 
       for(uint i=0 ; i < attrId.length ; i++) {
-        //Would be nice if ERC3664 had a setValue instead of just increase/decrease
-        uint256 amount = attrBalances[attrId[i]][tokenId];
-        int256 offsetAmount = int256(amount) - int256(attrValue[i]);
-        
-        require(offsetAmount != 0, "Attribute value has not changed.");
-        if(offsetAmount > 0) {
-          decrease(tokenId, attrId[i], abs(offsetAmount));
+        if(attrValue[i] == 0) {
+          //remove attribute
+          remove(tokenId, attrId[i]);
         }
         else {
-          increase(tokenId, attrId[i], abs(offsetAmount));
+          if(balanceOf(tokenId, attrId[i]) == 0 ) {
+            attach(tokenId, attrId[i], attrValue[i]);
+          }
+          else {
+            //Would be nice if ERC3664 had a setValue instead of just increase/decrease
+            uint256 amount = attrBalances[attrId[i]][tokenId];
+            int256 offsetAmount = int256(amount) - int256(attrValue[i]);
+            
+            require(offsetAmount != 0, "Attribute value has not changed.");
+            if(offsetAmount > 0) {
+              decrease(tokenId, attrId[i], abs(offsetAmount));
+            }
+            else {
+              increase(tokenId, attrId[i], abs(offsetAmount));
+            }
+          }
         }
       }
 
