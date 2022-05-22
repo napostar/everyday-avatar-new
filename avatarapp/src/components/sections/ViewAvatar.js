@@ -30,16 +30,19 @@ import AvatarBuilder from "../ui/AvatarBuilder";
 import { useNfts } from "../../context/NftsContext";
 import Avatar from '../ui/Avatar';
 import Mints from "../../components/sections/Mints";
+import { useBiconomy } from "../../context/BiconomyProvider";
 
 
 export default function ViewAvatar() {
   let { tokenId } = useParams(); 
   const toast = useToast();
   const {allNFTs, getTokenData} = useNfts();
-
+  const {isBiconomyInitialized, contract:everydayAvatarContract, biconomyProvider} = useBiconomy()
+  
   const didMountRef = useRef(false);
 
   const [fetchingToken, setFetchingToken] = useState(true);
+  const [metaTxnLoading, setMetaTxnLoading] = useState(false);
 
   const [ownedNFTs, setOwnedNFTs] = useState([]);
   const [fetchingOwnedNfts, setFetchingOwnedNfts] = useState(true);
@@ -358,6 +361,10 @@ export default function ViewAvatar() {
       return;
     }
 
+    if(!isBiconomyInitialized){
+      alert('Biconomy not initialized');return;
+    }
+
     let categories = [];
     let assets = [];
 
@@ -381,6 +388,8 @@ export default function ViewAvatar() {
       });
 
     if(categories.length && assets.length){
+      setMetaTxnLoading(true);
+      setResetNft(true);
       let options = {
         contractAddress: process.env.REACT_APP_CONTRACT_ADDRESS,
         functionName: "updateAvatar",
@@ -389,14 +398,50 @@ export default function ViewAvatar() {
           tokenId: tokenId,
           attrId: categories,
           attrValue: assets,
-        },
-        //msgValue: Moralis.Units.ETH(10),
+        }
       };
-  
-      const updateMintTxn = await fetch({ params: options });
-      if (updateMintTxn) {
-        await updateMintTxn.wait(1);
+
+      try {
+        const txn = await everydayAvatarContract.methods.updateAvatar(tokenId, categories, assets).send({
+          from: user.attributes.ethAddress,
+          signatureType: biconomyProvider.EIP712_SIGN
+        })
+        if(typeof txn.transactionHash !== 'undefined'){
+          toast({
+            title: "Avatar Updated",
+            description: `Txn ${txn.transactionHash}`,
+            status: "success",
+            position: "bottom-right",
+            duration: 9000,
+            isClosable: true,
+          });
+        }
+      } catch (err) {
+        toast({
+          title: "",
+          description: err.message,
+          status: "error",
+          position: "bottom-right",
+          duration: 9000,
+          isClosable: true,
+        });
       }
+      setResetNft(false);
+      setMetaTxnLoading(false);
+     
+      
+      // txn.on("transactionHash", function () {})
+      // .once("confirmation", function (transactionHash) {
+      //   console.log(transactionHash);
+      // })
+      // .on("error", function (e) {
+      //   console.log(e);
+      // });
+      
+      // const updateMintTxn = await fetch({ params: options });
+      // if (updateMintTxn) {
+      //   await updateMintTxn.wait(1);
+      // }
     }
   };
 
@@ -536,7 +581,7 @@ export default function ViewAvatar() {
                     lineHeight="1"
                     size="md"
                     onClick={updateMintedAvatar}
-                    isLoading={isFetching}
+                    isLoading={metaTxnLoading}
                   >
                     Update Avatar
                   </Button>

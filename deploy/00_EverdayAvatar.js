@@ -30,10 +30,18 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   await eaTxn.wait(1);
 
   //Deploy EverydayAvatar
-  await deploy("EverydayAvatar",{
+  const everydayAvatar = await deploy("EverydayAvatar",{
     from: deployer,
     args: [eaData.address],
     log: true
   });
+
+  const everydayAvatarContract = await ethers.getContractAt(
+    "EverydayAvatar", everydayAvatar.address, await ethers.getSigner()
+  );
+  //set mumbai forwarder
+  const eTxn = await everydayAvatarContract.setTrustedForwarder('0x9399bb24dbb5c4b782c70c2969f58716ebbd6a3b');
+  await eTxn.wait(1);
+
 };
 module.exports.tags = ["all", "main"];

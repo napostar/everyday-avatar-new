@@ -21,18 +21,27 @@ module.exports = {
         process.env.PRIVATE_KEY_USER_3,
       ].filter((x) => x !== undefined),
     },
+    mumbai: {
+      url: process.env.POLYGON_MUMBAI_ALCHEMY_URL || "",
+      chainId: 80001,
+      accounts: [
+        process.env.PRIVATE_KEY_DEPLOYER
+      ].filter((x) => x !== undefined),
+    },
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
     currency: "USD",
   },
   etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY,
+    apiKey: process.env.POLYGONSCAN_API_KEY
   },
+  
   namedAccounts: {
     deployer: {
       default: 0,
       4: 0,
+      80001:0
     },
     user2: {
       default: 1,
