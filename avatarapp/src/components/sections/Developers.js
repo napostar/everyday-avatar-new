@@ -92,26 +92,25 @@ export default function Developers() {
           spacing={{ base: 10, md: 4, lg: 10 }}>
           <Testimonial>
             <TestimonialContent>
-              <TestimonialHeading>Lorem ipsum dolor</TestimonialHeading>
+              <TestimonialHeading>A Technical Creative</TestimonialHeading>
               <TestimonialText>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Auctor
-                neque sed imperdiet nibh lectus feugiat nunc sem.
+                A professional software developer by day, entrepreneur dreamer and tinkerer by night. Got back into crypto late-2021 as a web3 dev, tinkering with Solidity and blockchain. Making homemade icecream 🍨 is another favorite hobby.
               </TestimonialText>
             </TestimonialContent>
             <TestimonialAvatar
               src={
-                'https://images.unsplash.com/photo-1606663889134-b1dedb5ed8b7?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=687&q=80'
+                'https://images.unsplash.com/photo-1570197788417-0e82375c9371?crop=entropy&cs=tinysrgb&fm=jpg&ixlib=rb-1.2.1&q=80&raw_url=true&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=80'
               }
-              name={'Nathan'}
-              title={'Founder'}
+              name={'Nathan Powelson'}
+              title={'Founder & Web3 Dev'}
             />
           </Testimonial>
           <Testimonial>
             <TestimonialContent>
-              <TestimonialHeading>Lorem ipsum dolor set</TestimonialHeading>
+              <TestimonialHeading>Dreamer</TestimonialHeading>
               <TestimonialText>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Auctor
-                neque sed imperdiet nibh lectus feugiat nunc sem.
+                A Curios Passionate Software Dev. In the realm of Web3 learning & Loving it ❤️.One thing keeps me going
+                `When you have a Dream 🚀, You don't let it die`
               </TestimonialText>
             </TestimonialContent>
             <TestimonialAvatar
