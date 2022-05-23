@@ -37,7 +37,7 @@ export default function ViewAvatar() {
   let { tokenId } = useParams(); 
   const toast = useToast();
   const {allNFTs, getTokenData} = useNfts();
-  const {isBiconomyInitialized, contract:everydayAvatarContract, biconomyProvider} = useBiconomy()
+  const {isBiconomyInitialized, contract:everydayAvatarContract, biconomyProvider, dappBalance} = useBiconomy()
   
   const didMountRef = useRef(false);
 
@@ -168,10 +168,8 @@ export default function ViewAvatar() {
   const getTokenURIData = async() => {
       try {
         let tokenJson = await getTokenData(tokenId);
-        if(tokenJson){
-            if(tokenJson){                
-                return tokenJson;
-            }
+        if(tokenJson){              
+          return tokenJson;
         }
       } catch (error) {
         return null;
@@ -347,6 +345,38 @@ export default function ViewAvatar() {
     }
   };
 
+
+  //Gasless Update Avatar
+  const updateAvatarBico = async (categories, assets) => {
+   
+    try {
+      const txn = await everydayAvatarContract.methods.updateAvatar(tokenId, categories, assets).send({
+        from: user.attributes.ethAddress,
+        signatureType: biconomyProvider.EIP712_SIGN
+      })
+      if(typeof txn.transactionHash !== 'undefined'){
+        toast({
+          title: "Avatar Updated",
+          description: `Txn ${txn.transactionHash}`,
+          status: "success",
+          position: "bottom-right",
+          duration: 9000,
+          isClosable: true,
+        });
+      }
+    } catch (err) {
+      toast({
+        title: "",
+        description: err.message,
+        status: "error",
+        position: "bottom-right",
+        duration: 9000,
+        isClosable: true,
+      });
+    }
+    
+  }
+
   //Mint NFT Transaction
   const updateMintedAvatar = async () => {
     if (!isAuthenticated) {
@@ -390,58 +420,26 @@ export default function ViewAvatar() {
     if(categories.length && assets.length){
       setMetaTxnLoading(true);
       setResetNft(true);
-      let options = {
-        contractAddress: process.env.REACT_APP_CONTRACT_ADDRESS,
-        functionName: "updateAvatar",
-        abi: everyDayAvatar.abi,
-        params: {
-          tokenId: tokenId,
-          attrId: categories,
-          attrValue: assets,
+      if(dappBalance >= 1){
+        await updateAvatarBico(categories, assets)
+      }else{
+        let options = {
+          contractAddress: process.env.REACT_APP_CONTRACT_ADDRESS,
+          functionName: "updateAvatar",
+          abi: everyDayAvatar.abi,
+          params: {
+            tokenId: tokenId,
+            attrId: categories,
+            attrValue: assets,
+          }
+        };
+        const updateMintTxn = await fetch({ params: options });
+        if (updateMintTxn) {
+          await updateMintTxn.wait(1);
         }
-      };
-
-      try {
-        const txn = await everydayAvatarContract.methods.updateAvatar(tokenId, categories, assets).send({
-          from: user.attributes.ethAddress,
-          signatureType: biconomyProvider.EIP712_SIGN
-        })
-        if(typeof txn.transactionHash !== 'undefined'){
-          toast({
-            title: "Avatar Updated",
-            description: `Txn ${txn.transactionHash}`,
-            status: "success",
-            position: "bottom-right",
-            duration: 9000,
-            isClosable: true,
-          });
-        }
-      } catch (err) {
-        toast({
-          title: "",
-          description: err.message,
-          status: "error",
-          position: "bottom-right",
-          duration: 9000,
-          isClosable: true,
-        });
       }
       setResetNft(false);
       setMetaTxnLoading(false);
-     
-      
-      // txn.on("transactionHash", function () {})
-      // .once("confirmation", function (transactionHash) {
-      //   console.log(transactionHash);
-      // })
-      // .on("error", function (e) {
-      //   console.log(e);
-      // });
-      
-      // const updateMintTxn = await fetch({ params: options });
-      // if (updateMintTxn) {
-      //   await updateMintTxn.wait(1);
-      // }
     }
   };
 
@@ -457,9 +455,17 @@ export default function ViewAvatar() {
       if(nfts.length){
         for(let n in nfts) {
           if(nfts[n]){
-            const token_uri = await getTokenData(nfts[n].token_id);
+            let token_uri = await getTokenData(nfts[n].token_id);
             if(token_uri !== null){
               nfts[n].token_uri = token_uri;
+            }else if(nfts[n].token_uri){
+              let oldURI = Buffer.from(
+                nfts[n].token_uri.replace("data:application/json;base64,", ""),
+                "base64"
+              ).toString();
+              if(oldURI){
+                nfts[n].token_uri = JSON.parse(oldURI)
+              }
             }
           }
         }
@@ -499,8 +505,8 @@ export default function ViewAvatar() {
   
   const showControls = useCallback(() => {
     const nft = allNFTs.find((n) => n.token_id === tokenId);
-    return (isAuthenticated) && (nft?.owner_of) && (nft.owner_of.toLowerCase() === user.attributes.ethAddress.toLowerCase());
-  },[isAuthenticated,allNFTs, user, tokenId])
+    return (src !== null)&&(isAuthenticated) && (nft?.owner_of) && (nft.owner_of.toLowerCase() === user.attributes.ethAddress.toLowerCase());
+  },[isAuthenticated,allNFTs, user, tokenId, src])
 
   return (
     <Container maxW={"6xl"} py={12}>
