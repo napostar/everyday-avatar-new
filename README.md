@@ -1,7 +1,5 @@
 <img src="/avatarapp/src/everydayLogo.png" width="900">
 
-# Everyday Avatar
-
 Everyday Avatar is an NFT profile picture project, inspired by paper doll toys. Just like real paper dolls, this dynamic NFT project lets you swap out what your Avatar is wearing or how it looks, whenever you want.
 
 **Avatar Maker** is the backend component for our dApp, 
