@@ -94,7 +94,7 @@ export default function Developers() {
             <TestimonialContent>
               <TestimonialHeading>A Technical Creative</TestimonialHeading>
               <TestimonialText>
-                A professional software developer by day, entrepreneur dreamer and tinkerer by night. Got back into crypto late-2021 as a web3 dev, tinkering with Solidity and blockchain. Making homemade icecream is another favorite hobby.
+                A professional software developer by day, entrepreneur dreamer and tinkerer by night. Got back into crypto late-2021 as a web3 dev, tinkering with Solidity and blockchain. Making homemade icecream 🍨 is another favorite hobby.
               </TestimonialText>
             </TestimonialContent>
             <TestimonialAvatar
@@ -107,10 +107,10 @@ export default function Developers() {
           </Testimonial>
           <Testimonial>
             <TestimonialContent>
-              <TestimonialHeading>Lorem ipsum dolor set</TestimonialHeading>
+              <TestimonialHeading>Dreamer</TestimonialHeading>
               <TestimonialText>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Auctor
-                neque sed imperdiet nibh lectus feugiat nunc sem.
+                A Curios Passionate Software Dev. In the realm of Web3 learning & Loving it ❤️.One thing keeps me going
+                `When you have a Dream 🚀, You don't let it die`
               </TestimonialText>
             </TestimonialContent>
             <TestimonialAvatar
