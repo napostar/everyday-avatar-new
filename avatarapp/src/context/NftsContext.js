@@ -78,15 +78,19 @@ const NftsContext = ({children}) => {
 
       let tokenJson = await Moralis.Web3API.native.runContractFunction(options);
 
-      if (tokenJson) {
-        tokenJson = Buffer.from(
-          tokenJson.replace("data:application/json;base64,", ""),
-          "base64"
-        ).toString();
+      try {
         if (tokenJson) {
-          tokenJson = JSON.parse(tokenJson);
-          return tokenJson;
+          tokenJson = Buffer.from(
+            tokenJson.replace("data:application/json;base64,", ""),
+            "base64"
+          ).toString();
+          if (tokenJson) {
+            tokenJson = JSON.parse(tokenJson);
+            return tokenJson;
+          }
         }
+      } catch (err) {
+        
       }
     return null;
   };
