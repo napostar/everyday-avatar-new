@@ -107,7 +107,7 @@ export default function Developers() {
           </Testimonial>
           <Testimonial>
             <TestimonialContent>
-              <TestimonialHeading>Dreamer</TestimonialHeading>
+              <TestimonialHeading>Chain Minded</TestimonialHeading>
               <TestimonialText>
                 A Curios Passionate Software Dev. In the realm of Web3 learning & Loving it ❤️.One thing keeps me going
                 `When you have a Dream 🚀, You don't let it die`
