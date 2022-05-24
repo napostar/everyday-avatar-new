@@ -1,9 +1,8 @@
 import React from "react";
-import { Box, Text, Image, useColorMode } from "@chakra-ui/react";
+import { Box, Image } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import everydayLogo from '../../everydayLogo.png'
 const Logo = (props) => {
-  const {colorMode} = useColorMode();
   return (
     <Box {...props}>
       <Link to={"/"}>

@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React from "react";
 import {
   Badge,
   Box,
@@ -14,6 +14,7 @@ import {
   Wrap,
   WrapItem,
 } from "@chakra-ui/react";
+import { CheckCircleIcon } from '@chakra-ui/icons'
 import { useMoralis, useMoralisWeb3Api } from "react-moralis";
 import { Link as RouterLink } from "react-router-dom";
 
@@ -125,7 +126,13 @@ const Mints = ({allNFTs, fetchingNfts, refreshNfts, title="EverydayAvatar NFTs"}
                             textDecoration="none"
                             _hover={{ textDecoration: "none" }}
                           >
-                            {nft.name} #{nft.token_id}
+                            {nft.name} #{nft.token_id}   
+                            
+                            {metadata.isIpfs && 
+                            <Badge ml='1' fontSize='0.8em' colorScheme='green'>
+                              IPFS <CheckCircleIcon/>
+                            </Badge>}
+
                           </Link>
                         </Heading>
                         <Heading fontSize="sm" marginTop="2">

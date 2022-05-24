@@ -31,6 +31,8 @@ import { useNfts } from "../../context/NftsContext";
 import Avatar from '../ui/Avatar';
 import Mints from "../../components/sections/Mints";
 import { useBiconomy } from "../../context/BiconomyProvider";
+import isIPFS from 'is-ipfs';
+import { CheckCircleIcon } from "@chakra-ui/icons";
 
 
 export default function ViewAvatar() {
@@ -43,6 +45,8 @@ export default function ViewAvatar() {
 
   const [fetchingToken, setFetchingToken] = useState(true);
   const [metaTxnLoading, setMetaTxnLoading] = useState(false);
+  const [ipfsItLoading, setIpfsItLoading] = useState(false);
+  const [disableUpdateMint, setDisableUpdateMint] = useState(false);
 
   const [ownedNFTs, setOwnedNFTs] = useState([]);
   const [fetchingOwnedNfts, setFetchingOwnedNfts] = useState(true);
@@ -70,10 +74,8 @@ export default function ViewAvatar() {
     [C]:null
   });
 
-  const { data, error, fetch, isFetching } = useWeb3ExecuteFunction();
+  const { data, error, fetch } = useWeb3ExecuteFunction();
   const { isAuthenticated, isInitialized, user, Moralis } = useMoralis();
-
-
 
   useEffect(() => {
     let fetch = true;
@@ -114,14 +116,11 @@ export default function ViewAvatar() {
 
   useEffect(() => {
       if(didMountRef.current){
-
         const bgAsset = getAssetTraitData(BG,BACKGROUNDS,'Background');
         const headAsset = getAssetTraitData(H,HEAD,'Head');
         const faceAsset = getAssetTraitData(F,FACE,'Face');
         const clothesAsset = getAssetTraitData(C,CLOTHES,'Clothes');
 
-
-        
         setNewAvatar({
             bg: bgAsset,
             head: headAsset,
@@ -136,13 +135,6 @@ export default function ViewAvatar() {
             face: faceAsset,
             clothes: clothesAsset
           })
-
-          // setRequest({
-          //   [BG]: (bgAsset)?bgAsset.assetId:null,
-          //   [H]: (headAsset)?headAsset.assetId:null,
-          //   [F]:(faceAsset)?faceAsset.assetId:null,
-          //   [C]:(clothesAsset)?clothesAsset.assetId:null
-          // })
         }
       }
       didMountRef.current = true;
@@ -168,7 +160,15 @@ export default function ViewAvatar() {
   const getTokenURIData = async() => {
       try {
         let tokenJson = await getTokenData(tokenId);
-        if(tokenJson){              
+        if(tokenJson){    
+          tokenJson.isIpfs = false
+          if(tokenJson.image && tokenJson.image.includes('ipfs')){
+            const cid = tokenJson.image.split('//')[1];
+            if(isIPFS.cid(cid)){
+              tokenJson.image = `https://ipfs.io/ipfs/${cid}`
+              tokenJson.isIpfs = true;
+            }
+          }          
           return tokenJson;
         }
       } catch (error) {
@@ -419,6 +419,7 @@ export default function ViewAvatar() {
 
     if(categories.length && assets.length){
       setMetaTxnLoading(true);
+      setDisableUpdateMint(true);
       setResetNft(true);
       if(dappBalance >= 1){
         await updateAvatarBico(categories, assets)
@@ -440,6 +441,7 @@ export default function ViewAvatar() {
       }
       setResetNft(false);
       setMetaTxnLoading(false);
+      setDisableUpdateMint(false);
     }
   };
 
@@ -467,6 +469,16 @@ export default function ViewAvatar() {
                 nfts[n].token_uri = JSON.parse(oldURI)
               }
             }
+            if(nfts[n].token_uri){
+              nfts[n].token_uri.isIpfs = false
+              if(nfts[n].token_uri.image && nfts[n].token_uri.image.includes('ipfs')){
+                const cid = nfts[n].token_uri.image.split('//')[1];
+                if(isIPFS.cid(cid)){
+                  nfts[n].token_uri.image = `https://ipfs.io/ipfs/${cid}`
+                  nfts[n].token_uri.isIpfs = true;
+                }
+              } 
+            }
           }
         }
         return nfts;
@@ -475,6 +487,41 @@ export default function ViewAvatar() {
     } catch (error) {
       return [];
     }
+  }
+
+  const ipfsItHandler = async () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Error",
+        description: "Please connect your wallet",
+        status: "error",
+        position: "bottom-right",
+        duration: 9000,
+        isClosable: true,
+      });
+      return;
+    }
+    setIpfsItLoading(true);
+    if(!resetNft){
+      setResetNft(true);
+    }
+    setDisableUpdateMint(true);
+    let options = {
+      contractAddress: process.env.REACT_APP_CONTRACT_ADDRESS,
+      functionName: "requestNewImage",
+      abi: everyDayAvatar.abi,
+      params: {
+        tokenId: tokenId,
+      }
+    };
+    const request = await fetch({ params: options });
+    if (request) {
+      await request.wait(1);
+    }
+    setIpfsItLoading(false);
+    setResetNft(false);
+    setDisableUpdateMint(false);
+    await resetNftHandler()
   }
 
   const refreshOwnedNfts = async () => {
@@ -531,6 +578,10 @@ export default function ViewAvatar() {
                                   _hover={{ textDecoration: "none" }}
                                 >
                                   {(nftData?.name)?nftData?.name:'Name not found'}
+                                  {nftData.isIpfs && 
+                                  <Badge ml='1' fontSize='0.8em' colorScheme='green'>
+                                    IPFS <CheckCircleIcon/>
+                                  </Badge>}
                                 </Link>
                               </Heading>
                             
@@ -588,13 +639,14 @@ export default function ViewAvatar() {
                     size="md"
                     onClick={updateMintedAvatar}
                     isLoading={metaTxnLoading}
+                    disabled={disableUpdateMint}
                   >
                     Update Avatar
                   </Button>
                     </Box>
         
                     <Box pl={4}>
-                    <Button
+                  <Button
                     pt={8}
                     mt={5}
                     bg={colorMode === "dark" ? "customB.500" : "primary.500"}
@@ -613,6 +665,27 @@ export default function ViewAvatar() {
                     Reset
                   </Button>
                     </Box>
+
+                    {
+                      ((nftData) && (!nftData.isIpfs)) && 
+                      <Box pl={4}>
+                        <Button
+                          pt={8}
+                          mt={5}
+                          py="4"
+                          px="4"
+                          lineHeight="1"
+                          size='md'
+                          border='2px'
+                          borderColor='customB.500'
+                          onClick={ipfsItHandler}
+                          isLoading={ipfsItLoading}
+                        >
+                          IPFS IT
+                        </Button>
+                      </Box>
+                    }
+                    
                   </Flex>
                 </Stack>
           </>)

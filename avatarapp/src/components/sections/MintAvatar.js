@@ -229,11 +229,12 @@ export default function MintAvatar() {
 
     let paramAsset = [];
     let paramCategory = [];
-    category.map((c, idx) =>{
+    category.map((c, idx) => {
        if(assets[idx] !== 'none'){
         paramCategory.push(c);
         paramAsset.push(assets[idx]);
        }
+       return true;
     })
 
     if(paramCategory.length && paramAsset.length){
@@ -274,9 +275,6 @@ export default function MintAvatar() {
 
   };
 
-  function addLeadingZeros(num, totalLength) {
-    return String(num).padStart(totalLength, "0");
-  }
 
   return (
     <Container maxW={"6xl"} py={12}>

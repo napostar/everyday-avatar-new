@@ -1,5 +1,5 @@
 
-import React,{useState, useEffect, useContext} from 'react'
+import React,{useState, useEffect, useContext, useCallback} from 'react'
 import { useMoralis } from 'react-moralis';
 import everyDayAvatar from "../contract/EverydayAvatar.json"
 
@@ -15,24 +15,16 @@ const NftsContext = ({children}) => {
   const { isInitialized, Moralis } = useMoralis();
   const [fetchingNfts, setFetchingNfts] = useState(true);
 
+  const fetchNFTsForContract = useCallback(async () => {
+    const options = {
+      chain: 'mumbai',
+      address: process.env.REACT_APP_CONTRACT_ADDRESS,
+    };
+    const polygonNFTs = await Moralis.Web3API.token.getNFTOwners(options);
+    return polygonNFTs.result;
+  },[]);
 
-  useEffect(() => {
-    let fetch = true;
-    if(isInitialized){
-      (async () => {
-        const nfts = await fetchAllNfts();
-        if(fetch){
-          setAllNFTs(nfts);
-          setFetchingNfts(false);
-        }
-      })();
-    }
-    return () => {
-      fetch = false;
-    }
-  },[isInitialized])
-
-  const fetchAllNfts = async () => {
+  const fetchAllNfts = useCallback(async () => {
     let nfts = await fetchNFTsForContract();
     for(let n in nfts) {
       if(nfts[n]){
@@ -49,7 +41,24 @@ const NftsContext = ({children}) => {
       }
     }
     return nfts;
-  }
+  },[fetchNFTsForContract])
+
+  useEffect(() => {
+    let fetch = true;
+    if(isInitialized){
+      (async () => {
+        const nfts = await fetchAllNfts();
+        if(fetch){
+          setAllNFTs(nfts);
+          setFetchingNfts(false);
+        }
+      })();
+    }
+    return () => {
+      fetch = false;
+    }
+  },[isInitialized, fetchAllNfts])
+
 
   const parseToken = (token_uri) => {
     if(token_uri !== null){
@@ -102,14 +111,7 @@ const NftsContext = ({children}) => {
     setFetchingNfts(false);
   }
 
-  const fetchNFTsForContract = async () => {
-    const options = {
-      chain: 'mumbai',
-      address: process.env.REACT_APP_CONTRACT_ADDRESS,
-    };
-    const polygonNFTs = await Moralis.Web3API.token.getNFTOwners(options);
-    return polygonNFTs.result;
-  };
+
 
   return (
     <NftContext.Provider value={{
