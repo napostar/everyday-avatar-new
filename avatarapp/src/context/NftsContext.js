@@ -40,6 +40,12 @@ const NftsContext = ({children}) => {
         }else if(nfts[n].token_uri === null){
           const token_uri = await getTokenData(nfts[n].token_id);
           if(token_uri !== null){
+
+            if(token_uri.image && token_uri.image.includes('ipfs')){
+              const cid = token_uri.image.split('//')[1];
+              token_uri.image = `https://ipfs.io/ipfs/${cid}`
+            }     
+
             nfts[n].token_uri = token_uri;
           }
         }
