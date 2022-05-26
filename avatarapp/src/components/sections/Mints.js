@@ -128,7 +128,7 @@ const Mints = ({allNFTs, fetchingNfts, refreshNfts, title="EverydayAvatar NFTs"}
                           >
                             {nft.name} #{nft.token_id}   
                             
-                            {metadata.isIpfs && 
+                            {metadata?.isIpfs && 
                             <Badge ml='1' fontSize='0.8em' colorScheme='green'>
                               IPFS <CheckCircleIcon/>
                             </Badge>}
