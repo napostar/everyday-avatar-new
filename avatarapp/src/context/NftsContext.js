@@ -37,6 +37,11 @@ const NftsContext = ({children}) => {
           if(json.token_uri !== null){
             nfts[n].token_uri = json;
           }
+        }else if(nfts[n].token_uri === null){
+          const token_uri = await getTokenData(nfts[n].token_id);
+          if(token_uri !== null){
+            nfts[n].token_uri = token_uri;
+          }
         }
       }
     }
