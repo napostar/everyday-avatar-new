@@ -84,7 +84,7 @@ const BiconomyContextProvider = (props) => {
         });
     };
 
-    if (isAuthenticated && isWeb3Enabled && chainId !== "0x1") {
+    if (isAuthenticated && isWeb3Enabled && chainId === "0x13881") {
       initializeBiconomy();
     }
   }, [

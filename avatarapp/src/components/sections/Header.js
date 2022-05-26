@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState,useCallback } from "react";
 import { Link } from "react-router-dom";
 import { Box, Flex, Text, Button, useColorMode, useToast } from "@chakra-ui/react";
 //import { MoonIcon, SunIcon } from "@chakra-ui/icons";
@@ -52,7 +52,7 @@ const Header = (props) => {
   const {isAuthenticated, isInitialized, Moralis, user, authenticate, logout, isAuthenticating, web3, isWeb3Enabled,isWeb3EnableLoading, enableWeb3,chainId, authError} = useMoralis();
 
   useEffect(() => {
-    if(!isWeb3Enabled){
+    if(!isWeb3Enabled && !isWeb3EnableLoading){
        (async () => {
         await enableWeb3()
        })()
@@ -74,12 +74,10 @@ const Header = (props) => {
   },[authError])
 
   useEffect(() => {
-    if(isWeb3Enabled){
-      Moralis.onChainChanged(function (chain) {
-        if(isAuthenticated){
-          window.location.reload()
+      Moralis.onChainChanged(async function (chain) {
+        if((isAuthenticated) && (chain !== '0x13881')){
+          await logout()
         }
-        
       });
   
       Moralis.onAccountChanged(async(address)=>{
@@ -88,8 +86,7 @@ const Header = (props) => {
           window.location.reload()
         }
       });
-    }
-  }, [isWeb3Enabled]);
+  }, []);
   
   useEffect(() => {
     let getB = true;
@@ -108,6 +105,44 @@ const Header = (props) => {
     }
   },[isInitialized, isAuthenticated, isWeb3Enabled])
 
+
+  const wrongNetworkError = useCallback(async () => {
+    toast({
+      title: 'Network not supported.',
+      description: "Please switch to polygon testnet mumbai network.",
+      status: 'error',
+      position: 'bottom-right',
+      duration: 9000,
+      isClosable: true,
+    })
+    await logout()
+  },[])
+
+  const addTestnetMumbaiNetwork = useCallback(async () => {
+    const chainId = 80001;
+    const chainName = "Mumbai";
+    const currencyName = "MATIC";
+    const currencySymbol = "MATIC";
+    const rpcUrl = "https://matic-mumbai.chainstacklabs.com";
+    const blockExplorerUrl = "https://mumbai.polygonscan.com/";
+
+    try {
+      await Moralis.addNetwork(
+        chainId,
+        chainName,
+        currencyName,
+        currencySymbol,
+        rpcUrl,
+        blockExplorerUrl
+      );
+      //await authenticate({signingMessage:"SignIn To Everyday Avatar"});
+    } catch (error) {
+      await wrongNetworkError();
+    }
+  },[wrongNetworkError])
+
+ 
+
   useEffect(() => {
     let getB = true;
     
@@ -117,15 +152,23 @@ const Header = (props) => {
             const network = await web3.getNetwork();
             if(getB) {
               if(typeof CHAIN_IDS_TO_NAMES[network.chainId] === 'undefined'){
-                toast({
-                  title: 'Network not supported.',
-                  description: "Please switch to polygon network.",
-                  status: 'error',
-                  position: 'bottom-right',
-                  duration: 9000,
-                  isClosable: true,
-                })
-                await logout()
+                
+                try {
+                  await Moralis.switchNetwork('0x13881');
+                  await authenticate({signingMessage:"SignIn To Everyday Avatar"});
+                } catch (error) {
+                  if(error.code === 4902){
+                    try {
+                      await addTestnetMumbaiNetwork();
+                    } catch (e) {
+                      await wrongNetworkError();
+                    }
+                  }else{
+                    await wrongNetworkError();
+                  }
+                  
+                }
+                
               }
             }
           }
@@ -135,7 +178,8 @@ const Header = (props) => {
     return () => {
       getB = false;
     }
-  },[isWeb3Enabled, isAuthenticated])
+  },[isWeb3Enabled, isAuthenticated, addTestnetMumbaiNetwork, wrongNetworkError])
+
 
   const loginMetaMaskHandler = async () => {
     if(isWeb3EnableLoading){
