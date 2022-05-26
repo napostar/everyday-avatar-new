@@ -303,10 +303,11 @@ export default function ViewAvatar() {
   }, [avatarData]);
 
   const makeAvatar = (category, asset) => {
-    setNewAvatar((prevS) => ({
-      ...prevS,
-      [category]: asset,
-    }));
+    let updatedAvatarData = {
+      ...newAvatar,
+      [category]: asset
+    };
+    setNewAvatar(updatedAvatarData);
 
     let tokenTemp = nftData;
     let attrIdx = -1;
@@ -321,6 +322,14 @@ export default function ViewAvatar() {
     }
     if(attrIdx !== -1){
       tokenTemp.attributes[attrIdx]['value'] = asset.name;
+      if(tokenTemp.image.includes('ipfs')){
+        if(JSON.stringify(updatedAvatarData) !== JSON.stringify(oldAvatar)){
+          tokenTemp.isIpfs = false
+        }else{
+          tokenTemp.isIpfs = true
+        }
+      }
+     
       setNftData(tokenTemp);
     }
 
@@ -439,6 +448,7 @@ export default function ViewAvatar() {
           await updateMintTxn.wait(1);
         }
       }
+      await getNewTokenData();
       setResetNft(false);
       setMetaTxnLoading(false);
       setDisableUpdateMint(false);
@@ -518,10 +528,11 @@ export default function ViewAvatar() {
     if (request) {
       await request.wait(1);
     }
+    await resetNftHandler()
     setIpfsItLoading(false);
     setResetNft(false);
     setDisableUpdateMint(false);
-    await resetNftHandler()
+   
   }
 
   const refreshOwnedNfts = async () => {
@@ -547,6 +558,13 @@ export default function ViewAvatar() {
       setNftData(tJson);
     }
      setFetchingToken(false);
+  }
+
+  const getNewTokenData = async () => {
+    const tJson = await getTokenURIData();
+    if(tJson != null){
+      setNftData(tJson);
+    }
   }
 
   
@@ -667,7 +685,7 @@ export default function ViewAvatar() {
                     </Box>
 
                     {
-                      ((nftData) && (!nftData.isIpfs)) && 
+                      ((nftData) && (!nftData.isIpfs) && (!nftData.image.includes('ipfs'))) && 
                       <Box pl={4}>
                         <Button
                           pt={8}
