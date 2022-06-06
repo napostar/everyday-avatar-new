@@ -34,7 +34,11 @@ const NftsContext = ({children}) => {
         // }
         if(nfts[n].token_uri !== null){
           let json = parseToken(nfts[n].token_uri);
-          if(json.token_uri !== null){
+          if(json){
+            if(json.image && json.image.includes('ipfs')){
+              const cidImg = json.image.split('//')[1];
+              json.image = `https://ipfs.io/ipfs/${cidImg}`
+            }    
             nfts[n].token_uri = json;
           }
         }else if(nfts[n].token_uri === null){
