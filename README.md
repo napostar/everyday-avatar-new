@@ -24,6 +24,15 @@ $ cd everyday-avatar
 $ npm install
 $ npx hardhat compile
 ```
+Env Variables
+```
+PRIVATE_KEY_DEPLOYER=
+ETHERSCAN_API_KEY=
+POLYGON_MUMBAI_ALCHEMY_URL=
+POLYGONSCAN_API_KEY=
+
+```
+
 ###React Installation
 Our react dApp was built using create-react-app, and all the files are located in the `/avatarapp` subfolder.  For further instructions view the readme [there](https://github.com/Hussainzz/everyday-avatar/tree/main/avatarapp#readme).
 
