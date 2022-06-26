@@ -16,12 +16,11 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Base64.sol";
-
 import "./ERC3664/extensions/ERC3664Updatable.sol";
 //import "https://github.com/napostar/EIP-3664/blob/main/contracts/extensions/ERC3664Updatable.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
-import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
 import "@opengsn/contracts/src/BaseRelayRecipient.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
 //interface for Avatar Data Contract
 interface IAvatarData  {
@@ -39,10 +38,11 @@ interface IAvatarData  {
  *   -Reads a Chainlink MATIC-USD price feed to keep mints pegged to a specific value in USD
  *   -Supports the openGSN EIP-2771 Gassless/Meta Transactions (for onboarding)
  */
-contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, BaseRelayRecipient, ChainlinkClient   {
+contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, BaseRelayRecipient, AccessControl {
     using Counters for Counters.Counter;
-    using Chainlink for Chainlink.Request;
     using Strings for uint256;
+    
+    bytes32 public constant URI_SETTER_ROLE = keccak256("URI_SETTER_ROLE");
 
     //List of attribute/nft part categories (Using Invisible Friends demo content)   
     uint constant BACKGROUND = 1;
@@ -66,9 +66,6 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
      //price to mint in USD
     uint constant usdPrice = 1;
 
-    //mapping requestId to tokenId for getting IPFS hashes
-    mapping(bytes32 => uint256) private _requestMap;
-
     //errors that could be thrown
     error InsufficientPayment(uint256 requiredAmount);
     error UnauthorizedOperator();
@@ -78,6 +75,9 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
     error DuplicateAttributes(uint256 attributeId);
 
     constructor(address dataContract) ERC721("Everyday Avatar", "EA") ERC3664("") {
+      _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+      _grantRole(URI_SETTER_ROLE, msg.sender);
+          
       //Create ERC3664 attribute categories (attributeID, name, symbol, uri)
       ERC3664._mint(BACKGROUND, "bg", "Background", "");
       ERC3664._mint(HEAD, "head", "Head", "");
@@ -94,9 +94,6 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
       //mumbai matic/usd: 0xd0D5e3DB44DE05E9F294BB0a3bEEaF030DE24Ada
       priceFeed = AggregatorV3Interface(0xd0D5e3DB44DE05E9F294BB0a3bEEaF030DE24Ada);
       
-      //Chainlink Oracle for IPFS image CIDs
-      setChainlinkToken(0x326C977E6efc84E512bB9C30f76E30c160eD06FB);
-      setChainlinkOracle(0xedaa6962Cf1368a92e244DdC11aaC49c0A0acC37);
     }
 
     //validate attribute and value array inputs
@@ -178,29 +175,9 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
         _setTokenURI(tokenId, "");
     }   
 
-    //when requested, generate a new image and save the IPFS hash
-    //using chainlink Any API Large Responses
-    function requestNewImage(uint256 tokenId) public returns(bytes32) {
-      bytes32 _jobId = "56b3da0f8f874c8bab6532de71af54e9";
-      uint256 payment = 0;
-      //custom job calls backend api:  /make-avatar
-      Chainlink.Request memory req = buildChainlinkRequest(_jobId, address(this), this.fulfillBytes.selector);
-      req.add("id", string(getTokenAttributeString(tokenId)));
-      bytes32 requestId = sendOperatorRequest(req, payment);
-      _requestMap[requestId] = tokenId;
-      return requestId;
-    }
-    
-    event RequestFulfilled(bytes32 indexed requestId, bytes indexed data, uint256 indexed tokenId);
-  
-    /**
-     * @notice Fulfillment function for variable bytes
-     * @dev This is called by the oracle. recordChainlinkFulfillment must be used.
-     */
-    function fulfillBytes(bytes32 requestId, bytes memory bytesData) public recordChainlinkFulfillment(requestId) {
-      uint256 tokenId = _requestMap[requestId];
-      emit RequestFulfilled(requestId, bytesData, tokenId);
-      _setTokenURI(tokenId, string(bytesData));
+    //save the IPFS CID
+    function updateToIPFS(uint256 tokenId, string memory newCID) public onlyRole(URI_SETTER_ROLE){
+      _setTokenURI(tokenId, newCID);
     }
     
     //generate the attribute string that will behave like the DNA for a given token.
@@ -303,9 +280,9 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
         super._burn(tokenId);
     }
 
-    function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC3664) returns (bool)
+    function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC3664, AccessControl) returns (bool)
     {
-        return ERC721.supportsInterface(interfaceId) || ERC3664.supportsInterface(interfaceId);
+        return super.supportsInterface(interfaceId);
     }
 
     //The following functions are to support meta transactions
