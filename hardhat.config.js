@@ -8,9 +8,10 @@ require('hardhat-contract-sizer');
 
 module.exports = {
   networks: {
-    ganache:{
-      url: "http://127.0.0.1:8545",
-      chainId:1337
+    defaultNetwork: "hardhat",
+    hardhat:{
+      chainId: 31337,
+      blockConfirmations: 1
     },
     rinkeby: {
       url: process.env.RINKEBY_URL || "",

@@ -1,4 +1,5 @@
 
+const { ethers, network } = require('hardhat');
 const avatarComponents = require('../scripts/asset_data.json');
 
 module.exports = async ({ getNamedAccounts, deployments }) => {
@@ -8,7 +9,8 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   //Deploy EAData
   const eaData = await deploy("AvatarNameData",{
     from:deployer,
-    log: true
+    log: true,
+    waitConfirmations: network.config.blockConfirmations || 1
   });
 
   //addManyComponents
@@ -23,9 +25,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   }
 
   log(`AvatarNameData Calling addManyComponents...`);
-  const avatarNameData = await ethers.getContractAt(
-    "AvatarNameData", eaData.address, await ethers.getSigner()
-  );
+  const avatarNameData = await ethers.getContract("AvatarNameData");
   const eaTxn = await avatarNameData.addManyComponents(attrIds, catIds, nameArr);
   await eaTxn.wait(1);
 
@@ -33,15 +33,16 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const everydayAvatar = await deploy("EverydayAvatar",{
     from: deployer,
     args: [eaData.address],
-    log: true
+    log: true,
+    waitConfirmations: network.config.blockConfirmations || 1
   });
 
-  const everydayAvatarContract = await ethers.getContractAt(
-    "EverydayAvatar", everydayAvatar.address, await ethers.getSigner()
-  );
-  //set mumbai forwarder
-  const eTxn = await everydayAvatarContract.setTrustedForwarder('0x9399bb24dbb5c4b782c70c2969f58716ebbd6a3b');
-  await eTxn.wait(1);
+
+
+  // const everydayAvatarContract = await ethers.getContract("EverydayAvatar");
+  // //set mumbai forwarder
+  // const eTxn = await everydayAvatarContract.setTrustedForwarder('0x9399bb24dbb5c4b782c70c2969f58716ebbd6a3b');
+  // await eTxn.wait(1);
 
 };
 module.exports.tags = ["all", "main"];
