@@ -37,7 +37,7 @@ const NftsContext = ({children}) => {
           if(json){
             if(json.image && json.image.includes('ipfs')){
               const cidImg = json.image.split('//')[1];
-              json.image = `https://ipfs.io/ipfs/${cidImg}`
+              json.image = `https://everydayavatar.infura-ipfs.io/ipfs/${cidImg}`
             }    
             nfts[n].token_uri = json;
           }
@@ -47,7 +47,7 @@ const NftsContext = ({children}) => {
 
             if(token_uri.image && token_uri.image.includes('ipfs')){
               const cid = token_uri.image.split('//')[1];
-              token_uri.image = `https://ipfs.io/ipfs/${cid}`
+              token_uri.image = `https://everydayavatar.infura-ipfs.io/ipfs/${cid}`
             }     
 
             nfts[n].token_uri = token_uri;
