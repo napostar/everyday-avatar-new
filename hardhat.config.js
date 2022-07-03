@@ -7,20 +7,11 @@ require("hardhat-deploy");
 require('hardhat-contract-sizer');
 
 module.exports = {
+  defaultNetwork: "hardhat",
   networks: {
-    defaultNetwork: "hardhat",
     hardhat:{
       chainId: 31337,
       blockConfirmations: 1
-    },
-    rinkeby: {
-      url: process.env.RINKEBY_URL || "",
-      chainId: 4,
-      accounts: [
-        process.env.PRIVATE_KEY_DEPLOYER,
-        process.env.PRIVATE_KEY_USER_2,
-        process.env.PRIVATE_KEY_USER_3,
-      ].filter((x) => x !== undefined),
     },
     mumbai: {
       url: process.env.POLYGON_MUMBAI_ALCHEMY_URL || "",
@@ -28,7 +19,16 @@ module.exports = {
       accounts: [
         process.env.PRIVATE_KEY_DEPLOYER
       ].filter((x) => x !== undefined),
+      blockConfirmations: 1
     },
+    polygon: {
+      url: process.env.POLYGON_MAINNET_ALCHEMY_URL || "",
+      accounts:[
+        process.env.PRIVATE_KEY_DEPLOYER
+      ].filter((x)=>x!==undefined),
+      chainId:137,
+      blockConfirmations: 1
+    }
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
