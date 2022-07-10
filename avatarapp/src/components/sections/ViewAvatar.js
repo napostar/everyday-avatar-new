@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import axios from "axios";
 import {
   Stack,
   Image,
@@ -121,20 +122,16 @@ export default function ViewAvatar() {
         const faceAsset = getAssetTraitData(F,FACE,'Face');
         const clothesAsset = getAssetTraitData(C,CLOTHES,'Clothes');
 
-        setNewAvatar({
-            bg: bgAsset,
-            head: headAsset,
-            face: faceAsset,
-            clothes: clothesAsset
-        });
-
+        const obj = {
+          bg: bgAsset,
+          head: headAsset,
+          face: faceAsset,
+          clothes: clothesAsset
+      }
+        setNewAvatar(obj);
+        
         if(oldAvatar === null){
-          setOldAvatar({
-            bg: bgAsset,
-            head: headAsset,
-            face: faceAsset,
-            clothes: clothesAsset
-          })
+          setOldAvatar(obj)
         }
       }
       didMountRef.current = true;
@@ -145,16 +142,16 @@ export default function ViewAvatar() {
   },[nftData, tokenId]);
 
   const getAssetTraitData = (category, components, trait) => {
-    let attr = nftData.attributes.find(n => n.trait_type === trait);
-    let asset = {
-      assetId:'none',
-      category: category,
-      name: 'None'
-    };
-    if(typeof attr !== 'undefined'){
-      asset = components.find(a => a.name === attr.value)
-    }
-    return asset
+      let attr = nftData?.attributes.find(n => n.trait_type === trait);
+      let asset = {
+        assetId:'none',
+        category: category,
+        name: 'None'
+      };
+      if(typeof attr !== 'undefined'){
+        asset = components.find(a => a.name === attr.value)
+      }
+      return asset
   }
 
   const getTokenURIData = async() => {
@@ -307,6 +304,7 @@ export default function ViewAvatar() {
       ...newAvatar,
       [category]: asset
     };
+   
     setNewAvatar(updatedAvatarData);
 
     let tokenTemp = nftData;
@@ -320,6 +318,7 @@ export default function ViewAvatar() {
     }else if(category === 'clothes'){
       attrIdx = tokenTemp.attributes.findIndex(n => n.trait_type === 'Clothes');
     }
+    
     if(attrIdx !== -1){
       tokenTemp.attributes[attrIdx]['value'] = asset.name;
       if(tokenTemp.image.includes('ipfs')){
@@ -329,10 +328,10 @@ export default function ViewAvatar() {
           tokenTemp.isIpfs = true
         }
       }
-     
+      
       setNftData(tokenTemp);
     }
-
+    
     let v = null
     if(oldAvatar[category] !== null){
       if((asset.assetId !== 'none')&&(oldAvatar[category].assetId !== asset.assetId)){
@@ -357,7 +356,7 @@ export default function ViewAvatar() {
 
   //Gasless Update Avatar
   const updateAvatarBico = async (categories, assets) => {
-   
+
     try {
       const txn = await everydayAvatarContract.methods.updateAvatar(tokenId, categories, assets).send({
         from: user.attributes.ethAddress,
@@ -436,7 +435,7 @@ export default function ViewAvatar() {
         let options = {
           contractAddress: process.env.REACT_APP_CONTRACT_ADDRESS,
           functionName: "updateAvatar",
-          abi: everyDayAvatar.abi,
+          abi: everyDayAvatar,
           params: {
             tokenId: tokenId,
             attrId: categories,
@@ -516,17 +515,81 @@ export default function ViewAvatar() {
       setResetNft(true);
     }
     setDisableUpdateMint(true);
-    let options = {
-      contractAddress: process.env.REACT_APP_CONTRACT_ADDRESS,
-      functionName: "requestNewImage",
-      abi: everyDayAvatar.abi,
-      params: {
-        tokenId: tokenId,
+    // let options = {
+    //   contractAddress: process.env.REACT_APP_CONTRACT_ADDRESS,
+    //   functionName: "requestNewImage",
+    //   abi: everyDayAvatar,
+    //   params: {
+    //     tokenId: tokenId,
+    //   }
+    // };
+    // const request = await fetch({ params: options });
+    // if (request) {
+    //   await request.wait(1);
+    // }
+    if(nftData && nftData.image){
+      try {
+        const avatarMakeAvatarReq = { 
+          data: { 
+            id: nftData.image.split("/").pop(),
+            tokenId: tokenId 
+          }
+        };
+        const response = await axios.post('https://everydayavatarapi.herokuapp.com/make-avatar?pin=true', avatarMakeAvatarReq);
+        if(response.data){
+          const {data, statusCode} = response.data;
+          if(statusCode === 200){
+            if(data.msg === "ipfs_inProgress"){
+              toast({
+                title: "Warning",
+                description: data.result,
+                status: "info",
+                position: "bottom-right",
+                duration: 9000,
+                isClosable: true,
+              });
+            }else{
+              const hashReq = {
+                hash: data.result,
+                token: tokenId,
+                owner: user.attributes.ethAddress
+              }
+              const txn = await axios.post('https://everydayavatarapi.herokuapp.com/update-avatar-ipfs', hashReq);
+              if(txn.data){
+                const {success, msg} = txn.data;
+                if(success){
+                  toast({
+                    title: "Success",
+                    description: "Your NFT has been pinned to IPFS",
+                    status: "success",
+                    position: "bottom-right",
+                    duration: 9000,
+                    isClosable: true,
+                  });
+                }else {
+                  let message = "Something went wrong"
+                  let status = "error"
+                  if((msg === "already_ipfs")){
+                    message = "Already IPFS"
+                    status = "info"
+                  }
+                  toast({
+                    title: "Warning",
+                    description: message,
+                    status: status,
+                    position: "bottom-right",
+                    duration: 9000,
+                    isClosable: true,
+                  });
+                }
+              }
+            }
+         
+          }
+        }
+      } catch (error) {
+        
       }
-    };
-    const request = await fetch({ params: options });
-    if (request) {
-      await request.wait(1);
     }
     await resetNftHandler()
     setIpfsItLoading(false);

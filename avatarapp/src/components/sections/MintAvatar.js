@@ -241,14 +241,14 @@ export default function MintAvatar() {
       let opt = {
         contractAddress: process.env.REACT_APP_CONTRACT_ADDRESS,
         functionName: "mintFee",
-        abi: everyDayAvatar.abi,
+        abi: everyDayAvatar,
       };
       const mintFee = await Moralis.executeFunction(opt);
   
       let options = {
         contractAddress: process.env.REACT_APP_CONTRACT_ADDRESS,
         functionName: "mintAvatar",
-        abi: everyDayAvatar.abi,
+        abi: everyDayAvatar,
         params: {
           to: user.attributes.ethAddress,
           attrId: paramCategory,

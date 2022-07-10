@@ -96,7 +96,7 @@ const Mints = ({allNFTs, fetchingNfts, refreshNfts, title="EverydayAvatar NFTs"}
             allNFTs.length ? (
               <Wrap spacing="30px" marginTop="5">
                 {allNFTs.map((nft, idx) => {
-                  const metadata = (nft.token_uri !== null) ? nft.token_uri : JSON.parse(nft.metadata);
+                  const metadata = ((nft.token_uri !== null)||(nft.token_uri !== "Invalid uri")) ? nft.token_uri : JSON.parse(nft.metadata);
                   return (
                     <WrapItem width={{ base: "100%", sm: "45%", md: "45%", lg: "30%" }} key={idx}>
                       <Box w="100%">

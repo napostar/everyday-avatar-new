@@ -30,7 +30,7 @@ const BiconomyContextProvider = (props) => {
   const [biconomyProvider, setBiconomyProvider] = useState({});
   const [contract, setContract] = useState({});
   const [dappBalance, setDappBalance] = useState(0);
-  const { abi } = everydayAvatarContract;
+  const abi  = everydayAvatarContract;
   const contractAddress = process.env.REACT_APP_CONTRACT_ADDRESS;
 
   useEffect(() => {

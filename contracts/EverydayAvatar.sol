@@ -85,7 +85,7 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
       ERC3664._mint(CLOTHES, "clothes", "Clothes", "");
       
       //initial mint fee will be 10 MATIC (~$15 usd) (deploying on Polygon)
-      mintFee = 10 ether;
+      mintFee = 1 ether;
 
       //need to update with the actual contract (needs to be deployed first)
       compData =  IAvatarData(dataContract);

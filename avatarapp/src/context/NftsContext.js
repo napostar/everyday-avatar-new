@@ -13,6 +13,8 @@ const NftsContext = ({children}) => {
   const [allNFTs, setAllNFTs] = useState([]);
 
   const { isInitialized, Moralis } = useMoralis();
+  const everydayAvatarAddress = process.env.REACT_APP_CONTRACT_ADDRESS
+
   const [fetchingNfts, setFetchingNfts] = useState(true);
 
   const fetchNFTsForContract = useCallback(async () => {
@@ -32,7 +34,7 @@ const NftsContext = ({children}) => {
         // if(token_uri !== null){
         //   nfts[n].token_uri = token_uri;
         // }
-        if(nfts[n].token_uri !== null){
+        if((nfts[n].token_uri !== null) && (nfts[n].token_uri !== 'Invalid uri')){
           let json = parseToken(nfts[n].token_uri);
           if(json){
             if(json.image && json.image.includes('ipfs')){
@@ -41,7 +43,18 @@ const NftsContext = ({children}) => {
             }    
             nfts[n].token_uri = json;
           }
-        }else if(nfts[n].token_uri === null){
+
+        }else if(nfts[n].metadata !== null){
+          const meta = JSON.parse(nfts[n].metadata)
+          
+          if(meta.image && meta.image.includes('ipfs')){
+            const cid = meta.image.split('//')[1];
+            meta.image = `https://everydayavatar.infura-ipfs.io/ipfs/${cid}`
+          }   
+
+          nfts[n].token_uri = meta
+
+        }else if((nfts[n].token_uri === null)||(nfts[n].token_uri == 'Invalid uri')){
           const token_uri = await getTokenData(nfts[n].token_id);
           if(token_uri !== null){
 
@@ -77,7 +90,7 @@ const NftsContext = ({children}) => {
 
   const parseToken = (token_uri) => {
     if(token_uri !== null){
-      let tokenJson = Buffer.from(
+      let tokenJson = Buffer.from(  
         token_uri.replace("data:application/json;base64,", ""),
         "base64"
       ).toString();
@@ -92,9 +105,9 @@ const NftsContext = ({children}) => {
   const getTokenData = async (tokenId) => {
       let options = {
         chain: "mumbai",
-        address: process.env.REACT_APP_CONTRACT_ADDRESS,
+        address: everydayAvatarAddress,
         function_name: "tokenURI",
-        abi: everyDayAvatar.abi,
+        abi: everyDayAvatar,
         params: {
           tokenId: tokenId,
         },
@@ -114,7 +127,7 @@ const NftsContext = ({children}) => {
           }
         }
       } catch (err) {
-        
+
       }
     return null;
   };
