@@ -73,7 +73,12 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
     error AttributeArraysMismatch();
     error InvalidAttributeValue(uint256 attributeId, uint256 attributeValue);
     error DuplicateAttributes(uint256 attributeId);
-
+    
+    //Events
+    event AvatarUpdate(address indexed _owner, uint256 indexed _tokenId, bytes _dna);
+    event AvatarUpdateIPFS(uint256 indexed _tokenId, string _cid);
+    event MintFeeUpdated(uint256 indexed _mintFee);
+    
     constructor(address dataContract) ERC721("Everyday Avatar", "EA") ERC3664("") {
       _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
       _grantRole(URI_SETTER_ROLE, msg.sender);
@@ -137,6 +142,9 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
         for(uint i=0; i < attrId.length ; i++){
           ERC3664.attach(tokenId, attrId[i], attrValue[i]);
         }
+        
+        //generate event
+        emit AvatarUpdate(to, tokenId, getTokenAttributeString(tokenId));
     }
 
     //update token attributes (scoped to only the token owner)
@@ -173,11 +181,15 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
       //clear existing ipfs hash if any
       if(bytes(ERC721URIStorage.tokenURI(tokenId)).length > 0)
         _setTokenURI(tokenId, "");
+        
+      //generate event
+      emit AvatarUpdate(_msgSender(), tokenId, getTokenAttributeString(tokenId));
     }   
 
     //save the IPFS CID
     function updateToIPFS(uint256 tokenId, string memory newCID) public onlyRole(URI_SETTER_ROLE){
       _setTokenURI(tokenId, newCID);
+      emit AvatarUpdateIPFS(tokenId, newCID);
     }
     
     //generate the attribute string that will behave like the DNA for a given token.
@@ -247,6 +259,7 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
         ) = priceFeed.latestRoundData();
         //calculates the new mint fee (of the amount of wei that equals $10 usd)
         mintFee = (usdPrice*10**(18 + priceFeed.decimals()))/uint(price); 
+        emit MintFeeUpdated(mintFee);
     }
     
     //withdraw function for funds (TODO look into PaymentSplitter contract)
