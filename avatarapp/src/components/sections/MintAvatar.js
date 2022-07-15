@@ -17,14 +17,15 @@ import {
   useWeb3ExecuteFunction
 } from "react-moralis";
 import everyDayAvatar from "../../contract/EverydayAvatar.json";
-import Mints from "./Mints";
+//import Mints from "./Mints";
 import avaAssets from "../../utils/avatarAssets";
 import AvatarBuilder from "../ui/AvatarBuilder";
-import { useNfts } from "../../context/NftsContext";
+//import { useNfts } from "../../context/NftsContext";
+import MintNew from "./MintNew";
 
 export default function MintAvatar() {
   const toast = useToast();
-  const {allNFTs, fetchingNfts, refreshNfts} = useNfts()
+  //const {allNFTs, fetchingNfts, refreshNfts} = useNfts()
 
   const [avatarData, setAvatarData] = useState([]);
 
@@ -238,13 +239,20 @@ export default function MintAvatar() {
     })
 
     if(paramCategory.length && paramAsset.length){
-      let opt = {
-        contractAddress: process.env.REACT_APP_CONTRACT_ADDRESS,
-        functionName: "mintFee",
-        abi: everyDayAvatar,
-      };
-      const mintFee = await Moralis.executeFunction(opt);
-  
+      let mintFee = Moralis.Units.ETH("1")
+      try {
+        let opt = {
+          contractAddress: process.env.REACT_APP_CONTRACT_ADDRESS,
+          functionName: "mintFee",
+          abi: everyDayAvatar,
+        };
+        mintFee = await Moralis.executeFunction(opt);
+        mintFee = Moralis.Units.ETH(Moralis.Units.FromWei(mintFee));
+      } catch (error) {
+        console.log(error);
+      }
+      
+      
       let options = {
         contractAddress: process.env.REACT_APP_CONTRACT_ADDRESS,
         functionName: "mintAvatar",
@@ -254,7 +262,7 @@ export default function MintAvatar() {
           attrId: paramCategory,
           attrValue: paramAsset,
         },
-        msgValue: Moralis.Units.ETH(Moralis.Units.FromWei(mintFee)),
+        msgValue: mintFee,
       };
   
       const mintTxn = await fetch({ params: options });
@@ -329,8 +337,8 @@ export default function MintAvatar() {
       </SimpleGrid>
 
       <Divider mt="4"/>
-      <Mints allNFTs={allNFTs} fetchingNfts={fetchingNfts} refreshNfts={refreshNfts}/>
-
+     {/*  <Mints allNFTs={allNFTs} fetchingNfts={fetchingNfts} refreshNfts={refreshNfts}/> */}
+      <MintNew/>
     </Container>
   );
 }

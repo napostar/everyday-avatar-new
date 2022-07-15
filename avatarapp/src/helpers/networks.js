@@ -4,7 +4,7 @@ export const networkConfigs = {
     chainName: "Mumbai",
     currencyName: "MATIC",
     currencySymbol: "MATIC",
-    rpcUrl: `https://speedy-nodes-nyc.moralis.io/${process.env.REACT_APP_MORALIS_SPEEDY_NODES_KEY}/polygon/mumbai`,
+    rpcUrl: "https://polygon-mumbai.g.alchemy.com/v2/dCXPxzt44xvab2ruNuyFHj1pL2p9MvPI",
     blockExplorerUrl: "https://mumbai.polygonscan.com/",
   }
 };

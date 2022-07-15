@@ -3,12 +3,13 @@ import React from "react";
 import Hero from "../components/sections/Hero";
 import LandingLayout from "../components/layouts/LandingLayout";
 import Developers from "../components/sections/Developers";
-import Mints from "../components/sections/Mints";
-import { useNfts } from "../context/NftsContext";
+//import Mints from "../components/sections/Mints";
+//import { useNfts } from "../context/NftsContext";
 import Footer from "../components/sections/Footer";
+import MintNew from "../components/sections/MintNew";
 
 export default function Landing() {
-  const { allNFTs, fetchingNfts, refreshNfts } = useNfts();
+  //const { allNFTs, fetchingNfts, refreshNfts } = useNfts();
   return (
     <>
       <LandingLayout>
@@ -18,11 +19,12 @@ export default function Landing() {
           ctaText="MINT NOW"
           ctaLink="/mint-nft"
         />
-        <Mints
+        {/* <Mints
           allNFTs={allNFTs}
           fetchingNfts={fetchingNfts}
           refreshNfts={refreshNfts}
-        />
+        /> */}
+        <MintNew/>
         <Developers />
       </LandingLayout>
       <Footer />

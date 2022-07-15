@@ -75,9 +75,9 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
     error DuplicateAttributes(uint256 attributeId);
     
     //Events
-    event AvatarUpdate(address indexed _owner, uint256 indexed _tokenId, bytes _dna);
-    event AvatarUpdateIPFS(uint256 indexed _tokenId, string _cid);
-    event MintFeeUpdated(uint256 indexed _mintFee);
+    event AvatarUpdate(address indexed owner, uint256 indexed tokenId, string tokenURI);
+    event AvatarUpdateIPFS(uint256 indexed tokenId, string cid, string tokenURI);
+    event MintFeeUpdated(uint256 indexed mintFee);
     
     constructor(address dataContract) ERC721("Everyday Avatar", "EA") ERC3664("") {
       _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -144,7 +144,7 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
         }
         
         //generate event
-        emit AvatarUpdate(to, tokenId, getTokenAttributeString(tokenId));
+        emit AvatarUpdate(to, tokenId, tokenURI(tokenId));
     }
 
     //update token attributes (scoped to only the token owner)
@@ -183,13 +183,13 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
         _setTokenURI(tokenId, "");
         
       //generate event
-      emit AvatarUpdate(_msgSender(), tokenId, getTokenAttributeString(tokenId));
+      emit AvatarUpdate(_msgSender(), tokenId, tokenURI(tokenId));
     }   
 
     //save the IPFS CID
     function updateToIPFS(uint256 tokenId, string memory newCID) public onlyRole(URI_SETTER_ROLE){
       _setTokenURI(tokenId, newCID);
-      emit AvatarUpdateIPFS(tokenId, newCID);
+      emit AvatarUpdateIPFS(tokenId, newCID, tokenURI(tokenId));
     }
     
     //generate the attribute string that will behave like the DNA for a given token.

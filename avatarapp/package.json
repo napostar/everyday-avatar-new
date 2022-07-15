@@ -44,7 +44,9 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "moralis:sync": "moralis-admin-cli connect-local-devchain --chain harhdat --moralisSubdomain jb6leiafhvyr.usemoralis.com --frpcPath ./frp/frpc",
+    "moralis:cloud": "moralis-admin-cli watch-cloud-folder --moralisSubdomain jb6leiafhvyr.usemoralis.com --autoSave 1 --moralisCloudfolder ./cloudFunctions"
   },
   "eslintConfig": {
     "extends": [

@@ -1,11 +1,11 @@
 import React from "react";
 import MintModifyNftLayout from "../components/layouts/MintModifyNftLayout";
-import ViewAvatar from "../components/sections/ViewAvatar";
+import ViewAvatarNew from "../components/sections/ViewAvatarNew";
 
 const UpdateAvatar = () => {
   return (
     <MintModifyNftLayout>
-      <ViewAvatar/>
+      <ViewAvatarNew/>
     </MintModifyNftLayout>
   );
 };
