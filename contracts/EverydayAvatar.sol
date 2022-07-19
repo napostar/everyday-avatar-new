@@ -27,7 +27,6 @@ interface IAvatarData  {
     function componentNames(uint[] memory attrValues) external view returns(string[] memory);
     function componentAttribute(uint componentId) external view returns(uint);
 }
-//TODO Update comments to NATSPEC format
 
 /**
  * The Everyday Avatar project was designed with the following requirements/features:
@@ -60,11 +59,12 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
     //Price feed for consistent mint prices
     AggregatorV3Interface internal priceFeed;
     
-    //mint fee can be updated by contract owner (in wei)
+    //mint cost in wei calculated from the usdMintTarget, updated using price feeds.
     uint256 public mintFee;
-
+    uint256 public updateAvatarFee;
+    
      //price to mint in USD
-    uint constant usdPrice = 1;
+    uint public usdMintTarget = 10;
 
     //errors that could be thrown
     error InsufficientPayment(uint256 requiredAmount);
@@ -89,9 +89,10 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
       ERC3664._mint(FACE, "face", "Face", "");
       ERC3664._mint(CLOTHES, "clothes", "Clothes", "");
       
-      //initial mint fee will be 10 MATIC (~$15 usd) (deploying on Polygon)
-      mintFee = 1 ether;
-
+      //initialize mint fee(~$10 usd in matic deploying on Polygon)
+      mintFee = 10 ether; //actually Matic (Polygon)
+      updateAvatarFee = 0.1 ether;
+      
       //need to update with the actual contract (needs to be deployed first)
       compData =  IAvatarData(dataContract);
       
@@ -148,10 +149,14 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
     }
 
     //update token attributes (scoped to only the token owner)
-    function updateAvatar(uint256 tokenId, uint256[] memory attrId, uint256[] memory attrValue) public validateAttributeArrays(attrId, attrValue) {
+    function updateAvatar(uint256 tokenId, uint256[] memory attrId, uint256[] memory attrValue) public payable validateAttributeArrays(attrId, attrValue) {
       //require user is owner using _msgSender()
       if(_msgSender() != ownerOf(tokenId))
         revert UnauthorizedOperator();
+        
+      //require and check payment, no fee if contract owner
+      if(msg.value < updateAvatarFee && _msgSender() != owner() )
+        revert InsufficientPayment(updateAvatarFee);
 
       for(uint i=0 ; i < attrId.length ; i++) {
         if(attrValue[i] == 0) {
@@ -258,7 +263,9 @@ contract EverydayAvatar is ERC721, ERC721URIStorage, ERC3664Updatable, Ownable, 
             /*uint80 answeredInRound*/
         ) = priceFeed.latestRoundData();
         //calculates the new mint fee (of the amount of wei that equals $10 usd)
-        mintFee = (usdPrice*10**(18 + priceFeed.decimals()))/uint(price); 
+        mintFee = (usdMintTarget*10**(18 + priceFeed.decimals()))/uint(price); 
+        updateAvatarFee = mintFee / uint(100);
+        
         emit MintFeeUpdated(mintFee);
     }
     
